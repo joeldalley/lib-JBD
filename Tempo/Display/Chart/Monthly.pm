@@ -1,7 +1,7 @@
 
-#/ Monthly miles run chart.
-#/ @author Joel Dalley
-#/ @version 2013/Nov/16
+# Monthly miles run chart.
+# @author Joel Dalley
+# @version 2013/Nov/16
 
 package JBD::Tempo::Display::Chart::Monthly;
 
@@ -14,12 +14,12 @@ use JBD::Tempo::Data 'DATE';
 use JSON 'to_json';
 
 
-#///////////////////////////////////////////////////////////////
-#/ Interface ///////////////////////////////////////////////////
+#//////////////////////////////////////////////////////////////
+# Interface ///////////////////////////////////////////////////
 
-#/ @param JBD::Tempo::Display::Chart::Monthly $this
-#/ @param int $Y   a year, YYYY
-#/ @return hash    template replacements
+# @param JBD::Tempo::Display::Chart::Monthly $this
+# @param int $Y   a year, YYYY
+# @return hash    template replacements
 sub chart {
     my ($this, $Y) = @_;
 
@@ -41,13 +41,13 @@ sub chart {
 }
 
 
-#///////////////////////////////////////////////////////////////
-#/ Internal use ////////////////////////////////////////////////
+#//////////////////////////////////////////////////////////////
+# Internal use ////////////////////////////////////////////////
 
-#/ @param JBD::Tempo::Display::Chart::Monthly $this
-#/ @param int $Y    a year, YYYY
-#/ @param int $m    a month, m or M
-#/ @return float    a number of miles
+# @param JBD::Tempo::Display::Chart::Monthly $this
+# @param int $Y    a year, YYYY
+# @param int $m    a month, m or M
+# @return float    a number of miles
 sub _dist {
     my ($this, $Y, $m) = @_;
     my $Ym = "$Y-" . sprintf('%02d', $m);

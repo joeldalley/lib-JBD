@@ -1,7 +1,7 @@
 
-#/ Recent miles run chart.
-#/ @author Joel Dalley
-#/ @version 2013/Nov/16
+# Recent miles run chart.
+# @author Joel Dalley
+# @version 2013/Nov/16
 
 package JBD::Tempo::Display::Chart::Recent;
 
@@ -13,11 +13,11 @@ use JBD::Core::Date;
 use JBD::Tempo::Color 'color_list';
 use JBD::Tempo::Data 'DATE';
 
-#///////////////////////////////////////////////////////////////
-#/ Interface ///////////////////////////////////////////////////
+#//////////////////////////////////////////////////////////////
+# Interface ///////////////////////////////////////////////////
 
-#/ @param JBD::Tempo::Display::Chart::Recent $this
-#/ @return string    container + chart html
+# @param JBD::Tempo::Display::Chart::Recent $this
+# @return string    container + chart html
 sub chart {
     my $this = shift;
 

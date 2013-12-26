@@ -1,7 +1,7 @@
 
-#/ log() returns the html of the run log.
-#/ @author Joel Dalley
-#/ @version 2013/Oct/06
+# Display subclass for the run log page.
+# @author Joel Dalley
+# @version 2013/Oct/06
 
 package JBD::Tempo::Display::Log;
 
@@ -12,12 +12,12 @@ use JBD::Core::Date;
 use JBD::Tempo::Data qw(DATE DIST FOOT SURF);
 
 
-#///////////////////////////////////////////////////////////////
-#/ Object interface ////////////////////////////////////////////
+#//////////////////////////////////////////////////////////////
+# Object interface ////////////////////////////////////////////
 
-#/ @param JBD::Tempo::Display::Log $this
-#/ @param int [optional] $size    how many rows: default all
-#/ @return string    html
+# @param JBD::Tempo::Display::Log $this
+# @param int [optional] $size    how many rows: default all
+# @return string    html
 sub log {
     my ($this, $size) = @_;
 
@@ -30,12 +30,12 @@ sub log {
 }
 
 
-#///////////////////////////////////////////////////////////////
-#/ Internal use ////////////////////////////////////////////////
+#//////////////////////////////////////////////////////////////
+# Internal use ////////////////////////////////////////////////
 
-#/ @param object $this    a Tempo::Display::Log
-#/ @param arrayref $row    a run log data row
-#/ @return string    html
+# @param object $this    a Tempo::Display::Log
+# @param arrayref $row    a run log data row
+# @return string    html
 sub _row {
     my ($this, $row) = @_;
     my $date = JBD::Core::Date->new_from_Ymd($row->[DATE]);

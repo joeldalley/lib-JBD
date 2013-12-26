@@ -1,7 +1,7 @@
 
-#/ Tempo Display class.
-#/ @author Joel Dalley
-#/ @version 2013/Nov/15
+# Tempo Display class.
+# @author Joel Dalley
+# @version 2013/Nov/15
 
 package JBD::Tempo::Display;
 
@@ -11,13 +11,13 @@ use JBD::Core::Date;
 use JBD::Tempo::Data;
 use HTML::Entities;
 
-#///////////////////////////////////////////////////////////////
-#/ Interface ///////////////////////////////////////////////////
+#//////////////////////////////////////////////////////////////
+# Interface ///////////////////////////////////////////////////
 
-#/ @param string $type    object type
-#/ @param string $tmpl_dir    path to template files
-#/ @param string $data_file    path to run data file
-#/ @return JBD::Tempo::Display
+# @param string $type    object type
+# @param string $tmpl_dir    path to template files
+# @param string $data_file    path to run data file
+# @return JBD::Tempo::Display
 sub new {
     my ($type, $tmpl_dir, $data_file) = @_;
 
@@ -28,35 +28,35 @@ sub new {
         ], $type;
 }
 
-#/ @param string $type    object type
-#/ @param JBD::Tempo::Display $source    source object
-#/ @return JBD::Tempo::Display
+# @param string $type    object type
+# @param JBD::Tempo::Display $source    source object
+# @return JBD::Tempo::Display
 sub from {
     my ($type, $source) = @_;
     bless [@$source], $type;
 }
 
-#/ @param JBD::Tempo::Display
-#/ @param string    a template file
-#/ @param hash [optional]   template replacements
-#/ @return string    html
+# @param JBD::Tempo::Display
+# @param string    a template file
+# @param hash [optional]   template replacements
+# @return string    html
 sub show { 
     my $this = shift;
     $this->[0]->(@_);
 }
 
-#/ @param JBD::Tempo::Display
-#/ @return JBD::Tempo::Data
+# @param JBD::Tempo::Display
+# @return JBD::Tempo::Data
 sub data { shift->[1] }
 
-#/ @param JBD::Tempo::Display
-#/ @return JBD::Core::Date
+# @param JBD::Tempo::Display
+# @return JBD::Core::Date
 sub date { shift->[2] }
 
-#/ @param JBD::Tempo::Display $this
-#/ @param string $h1    page H1 header
-#/ @param string $content   page content
-#/ @return string    page html
+# @param JBD::Tempo::Display $this
+# @param string $h1    page H1 header
+# @param string $content   page content
+# @return string    page html
 sub page {
     my ($this, $h1, $content) = @_;
     return $this->open($h1)
@@ -65,9 +65,9 @@ sub page {
          . $this->close;
 }
 
-#/ @param JBD::Tempo::Display $this
-#/ @param string [optional] $subtitle    page subtitle, or undef
-#/ @return string    page open html
+# @param JBD::Tempo::Display $this
+# @param string [optional] $subtitle    page subtitle, or undef
+# @return string    page open html
 sub open {
     my ($this, $subtitle) = @_;
 
@@ -80,24 +80,24 @@ sub open {
     );
 }
 
-#/ @param JBD::Tempo::Display $this
-#/ @param string $h1    H1 header
-#/ @return string    H1 header html
+# @param JBD::Tempo::Display $this
+# @param string $h1    H1 header
+# @return string    H1 header html
 sub h1 { 
     my ($this, $h1) = @_;
     $this->show('h1.html', '<!--H1-->' => encode_entities($h1));
 }
 
-#/ @param JBD::Tempo::Display $this
-#/ @param string $content    page content
-#/ @return string    page content html
+# @param JBD::Tempo::Display $this
+# @param string $content    page content
+# @return string    page content html
 sub content {
     my ($this, $content) = @_;
     $this->show('content.html', '<!--CONTENT-->' => $content);
 }
 
-#/ @param JBD::Tempo::Display $this
-#/ @return string    page close html
+# @param JBD::Tempo::Display $this
+# @return string    page close html
 sub close {
     my $this = shift;
     $this->show('page-close.html',
