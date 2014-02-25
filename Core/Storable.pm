@@ -31,7 +31,8 @@ sub STOR {3}
 sub new {
     die 'File required' if @_ < 2;
     my ($type, $file, $opts) = (shift, shift, shift || {});
-    bless [$file, (stat $file)[9], $opts, undef], $type;
+    my $stat = -e $file ? (stat $file)[9] : 0;
+    bless [$file, $stat, $opts, undef], $type;
 }
 
 #/ @param JBD::Core::Storable $this
