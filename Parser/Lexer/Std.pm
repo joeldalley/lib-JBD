@@ -25,12 +25,12 @@ sub _($$) {
 
 # Map of { package symbol => pattern-matcher sub }.
 my %symbol_definitions = (
-    Dot   => sub { _ shift, qr{^(\.+)}o },
     Space => sub { _ shift, qr{^(\s+)}o },
-    Float => sub { _ shift, qr{^([\d\.\-]+)}o },
+    Word  => sub { _ shift, qr{^([a-z\.]+)}io },
+    Float => sub { _ shift, qr{^(\d+\.\d*)}o },
+    Dot   => sub { _ shift, qr{^(\.+)}o },
     Ratio => sub { _ shift, qr{^(\d+\/\d+)}o },
     Int   => sub { _ shift, qr{^(\d+)}o },
-    Word  => sub { _ shift, qr{^([a-z\.]+)}io },
     Op    => sub { _ shift, qr{^([\+\*\-\\/(\)]{1})}o },
 );
 
