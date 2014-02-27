@@ -29,7 +29,7 @@ my @map = (
 
 # @param array Arguments for load().
 # @return array Symbols to export.
-sub symbols(@) { load shift @_, @_; @_ }
+sub symbols(@) { load shift, @_; @_ }
 
 # Export all symbols in @map.
 sub import() {

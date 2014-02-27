@@ -9,7 +9,6 @@ use JBD::Core::stern;
 use JBD::Core::Exporter ':omni';
 use JBD::Core::List 'flatmap';
 
-use JBD::Parser::Lexer::Std 'Word';
 use JBD::Parser::Token 'Nothing';
 use JBD::Parser::Input;
 use Carp 'croak';
