@@ -27,10 +27,10 @@ sub _($$) {
 my %symbol_definitions = (
     Space => sub { _ shift, qr{^(\s+)}o },
     Word  => sub { _ shift, qr{^([a-z\.]+)}io },
-    Float => sub { _ shift, qr{^(\d+\.\d*)}o },
+    Float => sub { _ shift, qr{^(-?\d+\.\d*|-?\d*\.\d+)}o },
     Dot   => sub { _ shift, qr{^(\.+)}o },
-    Ratio => sub { _ shift, qr{^(\d+\/\d+)}o },
-    Int   => sub { _ shift, qr{^(\d+)}o },
+    Ratio => sub { _ shift, qr{^(-?\d+\/-?\d+)}o },
+    Int   => sub { _ shift, qr{^(-?\d+)}o },
     Op    => sub { _ shift, qr{^([\+\*\-\\/\(\)]{1})}o },
 );
 

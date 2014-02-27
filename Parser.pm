@@ -12,6 +12,7 @@ use JBD::Core::List 'flatmap';
 use JBD::Parser::Lexer::Std 'Word';
 use JBD::Parser::Token 'Nothing';
 use JBD::Parser::Input;
+use Carp 'croak';
 
 # @param codref A code block.
 # @return JBD::Parser typed coderef.
@@ -23,6 +24,8 @@ sub parser(&) { bless $_[0], __PACKAGE__ }
 sub is($;$) {
     my $types = ref $_[0] eq 'ARRAY' ? shift : [shift];
     my $value_is = shift;
+
+    croak 'Token value must be scalar' if ref $value_is;
 
     # Is the current token of one of the given types?
     parser {
@@ -45,6 +48,28 @@ sub is($;$) {
         undef;
     };
 }
+
+# @param array Map of {Parser sub => token value}.
+# @return array Array of is(Type, Value) JBD::Parser subs.
+sub mapis(@) { 
+    croak 'Missing {Type => Value} map, for is()' unless @_;
+    croak 'Uneven number in given map' if @_ % 2;
+    my @is; while (@_) { push @is, is shift, shift } @is;
+}
+
+# mapp() -- 2nd "p" for Parser.
+# @param JBD::Parser coderef $p Mapping sub.
+# @param array Map of {Parser sub => token value}.
+# @return JBD::Parser typed coderef.
+sub mapp(&@) { my $p = shift; $p->(mapis @_) }
+
+# @param array Map of {Parser sub => token value}.
+# @return JBD::Parser typed coderef.
+sub mapcat(@) { mapp \&cat, @_ }
+
+# @param array Map of {Parser sub => token value}.
+# @return JBD::Parser typed coderef.
+sub mapany(@) { mapp \&any, @_ }
 
 # @param array @p Zero ore more JBD::Parser subs.
 # @return JBD::Parser typed coderef.
@@ -72,17 +97,6 @@ sub cat(@) {
         }
         (\@tok, $in);
     };
-}
-
-# @param array Map of {Parser sub => token value}.
-# @return JBD::Parser typed coderef.
-sub mapcat(@) { 
-    my @is;
-    while (@_) {
-        my ($p, $v) = (shift, shift);
-        push @is, is $p, $v;
-    }
-    cat @is;
 }
 
 # @param array @p Zero or more JBD::Parser subs.
