@@ -35,7 +35,8 @@ sub tokens($$;$) {
             push @tok, JBD::Parser::Token->new(ref $m, $v);
             last MATCH;
         }
-        $text = substr $text, 1, length($text)-1 if !$v;
+        $text = length $text < 2 || $v 
+              ? $text : substr $text, 1, length($text)-1;
     }
 
     push @tok, JBD::Parser::Token->end_of_input;

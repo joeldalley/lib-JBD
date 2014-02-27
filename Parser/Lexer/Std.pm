@@ -31,7 +31,7 @@ my %symbol_definitions = (
     Dot   => sub { _ shift, qr{^(\.+)}o },
     Ratio => sub { _ shift, qr{^(\d+\/\d+)}o },
     Int   => sub { _ shift, qr{^(\d+)}o },
-    Op    => sub { _ shift, qr{^([\+\*\-\\/(\)]{1})}o },
+    Op    => sub { _ shift, qr{^([\+\*\-\\/\(\)]{1})}o },
 );
 
 # Transform symbol definitions into package symbols.
