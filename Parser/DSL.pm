@@ -12,11 +12,18 @@ use Module::Load 'load';
 
 # Packages and their symbols.
 my @map = (
-    [qw| JBD::Parser parser is cat any star      |],
-    [qw| JBD::Parser::Token Nothing End_of_Input |],
-    [qw| JBD::Parser::Lexer tokens input         |],
-    [qw| JBD::Parser::Lexer::Std 
-         Word Space Op Int Float Ratio Dot       |],
+    [qw| JBD::Parser 
+         parser is cat mapcat any star trans
+    |],
+    [qw| JBD::Parser::Token
+         Nothing End_of_Input
+    |],
+    [qw| JBD::Parser::Lexer
+         tokens input
+    |],
+    [qw| JBD::Parser::Lexer::Std
+         Word Space Op Int Float Ratio Dot
+    |],
     );
 
 # @param array Arguments for load().

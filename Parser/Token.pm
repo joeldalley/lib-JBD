@@ -43,6 +43,20 @@ sub value {
 }
 
 # @param JBD::Parser::Token $this
+# @param arrayref $types Zero or more token types.
+# @param arrayref $vals Zero or more token values.
+# @return bool 1 if any type/value pair matches, or untrue.
+sub anyof {
+    my ($this, $types, $vals) = @_;
+    $this->typeis(@$types) && grep $this->eq($_), @$vals;
+}
+
+# @param JBD::Parser::Token
+# @param mixed A token value.
+# @return bool 1 or untrue.
+sub eq { !shift->ne(shift) }
+
+# @param JBD::Parser::Token $this
 # @param mixed $check A token value.
 # @return bool 1 or untrue.
 sub ne {

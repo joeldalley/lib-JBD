@@ -1,5 +1,5 @@
 
-# Provides parsing primitives is, any, cat, and star.
+# Provides parsing primitives.
 # @author Joel Dalley
 # @version 2014/Feb/22 
 
@@ -9,6 +9,7 @@ use JBD::Core::stern;
 use JBD::Core::Exporter ':omni';
 use JBD::Core::List 'flatmap';
 
+use JBD::Parser::Lexer::Std 'Word';
 use JBD::Parser::Token 'Nothing';
 use JBD::Parser::Input;
 
@@ -73,6 +74,17 @@ sub cat(@) {
     };
 }
 
+# @param array Map of {Parser sub => token value}.
+# @return JBD::Parser typed coderef.
+sub mapcat(@) { 
+    my @is;
+    while (@_) {
+        my ($p, $v) = (shift, shift);
+        push @is, is $p, $v;
+    }
+    cat @is;
+}
+
 # @param array @p Zero or more JBD::Parser subs.
 # @return JBD::Parser typed coderef.
 sub any(@) {
@@ -110,6 +122,20 @@ sub star($) {
         $tok = ref $tok eq 'ARRAY' ? $tok : [$tok];
         $tok = [grep !$_->typeis(Nothing), @$tok];
         ($tok, $in);
+    };
+}
+
+# @param JBD::Parser coderef $p Parser sub.
+# @param coderef $trans Token transforming sub.
+# @return JBD::Parser typed coderef.
+sub trans($$) {
+    my ($p, $trans) = @_;
+
+    parser {
+        my $in = shift;
+        my ($tok) = $p->($in);
+        return unless defined $tok;
+        ($trans->($tok), $in);
     };
 }
 

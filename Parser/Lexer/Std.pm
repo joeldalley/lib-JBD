@@ -12,18 +12,33 @@ no strict 'refs';
 
 # Map of { package symbol => pattern-matcher sub }.
 my %symbol_definitions = (
-    Dot   => sub {shift =~ m{(\.)}o,             $1},
-    Space => sub {shift =~ m{(\s+)}o;            $1},
-    Int   => sub {shift =~ m{([\d]+)}o;          $1},
-    Ratio => sub {shift =~ m{(\d+\/\d+)}o;       $1},
-    Float => sub {shift =~ m{([\d\.\-]+)}o;      $1},
-    Word  => sub {shift =~ m{([a-z\.]+)}io;      $1},
-    Op    => sub {shift =~ m#([\+\*\-\\/(\)])#o; $1},
+    Dot   => sub { _ shift, qr{^(\.+)}o },
+    Space => sub { _ shift, qr{^(\s+)}o },
+    Float => sub { _ shift, qr{^([\d\.\-]+)}o },
+    Ratio => sub { _ shift, qr{^(\d+\/\d+)}o },
+    Int   => sub { _ shift, qr{^(\d+)}o },
+    Word  => sub { _ shift, qr{^([a-z\.]+)}io },
+    Op    => sub { _ shift, qr{^([\+\*\-\\/(\)]{1})}o },
 );
 
 # Transform symbol definitions into package symbols.
 while (my ($sym, $sub) = each %symbol_definitions) {
     *{__PACKAGE__ . "::$sym"} = sub { bless $sub, $sym };
 }
+
+
+# Helper sub for pattern-matchers.
+# @param string $text Arbitrary/Unstructured text.
+# @param regex $regex Pattern to match.
+# @return array Array of (remaining text, matched text).
+sub _ {
+    my ($text, $regex) = @_;
+    $text =~ $regex;
+    return ($text) unless defined $1 && length $1;
+    my $diff = length($text) - length $1;
+    $text = substr $text, length($1), $diff;
+    ($text, $1);
+}
+
 
 1;

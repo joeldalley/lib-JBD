@@ -14,36 +14,42 @@ use JBD::Core::Exporter ':omni';
 use JBD::Parser::Lexer::Std 'Space';
 use JBD::Parser::Token;
 use JBD::Parser::Input;
+use Carp 'croak';
 
-# @param scalarref $in Unstructured/arbitrary text.
+# @param scalar $text Unstructured/arbitrary text.
 # @param arrayref $matchers Pattern-matcher subs.
 # @param coderef [opt] $sift Input token filter, or undef.
 # @return arrayref An array of JBD::Parser::Tokens.
 sub tokens($$;$) {
-    my @in = split //, ${(shift)};
+    my $text = shift;
     my ($matchers, $sift) = @_;
 
+    ref $text and croak 'Input must be scalar (text)';
+
     my @tok;
-    for my $char (@in) {
+    while (length $text) {
+        my $v;
         MATCH: for my $m (@$matchers) {
-            my $v = $m->($char);
+            ($text, $v) = $m->($text);
             next unless defined $v;
             push @tok, JBD::Parser::Token->new(ref $m, $v);
             last MATCH;
         }
+        $text = substr $text, 1, length($text)-1 if !$v;
     }
+
     push @tok, JBD::Parser::Token->end_of_input;
     ref $sift ? [grep $sift->($_), @tok] : \@tok;
 }
 
-# @param scalarref $in Unstructured/arbitrary text.
+# @param scalarref $text Unstructured/arbitrary text.
 # @param arrayref $matchers Pattern-matcher subs.
 # @param coderef [opt] $sift Input token filter, or undef.
 # @return JBD::Parser::Input
 sub input($$;$) {
-    my ($in, $matchers) = (shift, shift);
+    my ($text, $matchers) = (shift, shift);
     my $sift = shift || sub {!$_->typeis(Space)};
-    my $tokens = tokens $in, $matchers, $sift;
+    my $tokens = tokens $text, $matchers, $sift;
     JBD::Parser::Input->new($tokens);
 }
 
