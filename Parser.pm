@@ -5,6 +5,10 @@
 
 package JBD::Parser;
 
+use overload '""' => sub { ref $_[0] || $_[0] || 'Undef' },
+             '&'  => \&paircat,
+             '|'  => \&pairany;
+
 use JBD::Core::stern;
 use JBD::Core::Exporter ':omni';
 use JBD::Core::List 'flatmap';
@@ -47,28 +51,6 @@ sub is($;$) {
         undef;
     };
 }
-
-# @param array Map of {Parser sub => token value}.
-# @return array Array of is(Type, Value) JBD::Parser subs.
-sub mapis(@) { 
-    croak 'Missing {Type => Value} map, for is()' unless @_;
-    croak 'Uneven number in given map' if @_ % 2;
-    my @is; while (@_) { push @is, is shift, shift } @is;
-}
-
-# mapp() -- 2nd "p" for Parser.
-# @param JBD::Parser coderef $p Mapping sub.
-# @param array Map of {Parser sub => token value}.
-# @return JBD::Parser typed coderef.
-sub mapp(&@) { my $p = shift; $p->(mapis @_) }
-
-# @param array Map of {Parser sub => token value}.
-# @return JBD::Parser typed coderef.
-sub mapcat(@) { mapp \&cat, @_ }
-
-# @param array Map of {Parser sub => token value}.
-# @return JBD::Parser typed coderef.
-sub mapany(@) { mapp \&any, @_ }
 
 # @param array @p Zero ore more JBD::Parser subs.
 # @return JBD::Parser typed coderef.
@@ -151,5 +133,42 @@ sub trans($$) {
         ($trans->($tok), $in);
     };
 }
+
+# @param array Map of {Parser sub => token value}.
+# @return array Array of is(Type, Value) JBD::Parser subs.
+sub mapis(@) { 
+    croak 'Missing {Type => Value} map, for is()' unless @_;
+    croak 'Uneven number in given map' if @_ % 2;
+    my @is; while (@_) { push @is, is shift, shift } @is;
+}
+
+# mapp() -- 2nd "p" for Parser.
+# @param JBD::Parser coderef $p Mapping sub.
+# @param array Map of {Parser sub => token value}.
+# @return JBD::Parser typed coderef.
+sub mapp(&@) { my $p = shift; $p->(mapis @_) }
+
+# @param array Map of {Parser sub => token value}.
+# @return JBD::Parser typed coderef.
+sub mapcat(@) { mapp \&cat, @_ }
+
+# @param array Map of {Parser sub => token value}.
+# @return JBD::Parser typed coderef.
+sub mapany(@) { mapp \&any, @_ }
+
+# @param JBD::Parser coderef Ref to one of cat, any, etc.
+# @param array Arguments for the given cordref.
+# @return JBD::Parser codref The new parser sub.
+sub pairwise($@) { $_ = shift; $_->(@_[0, 1]) }
+
+# @param JBD::Parser coderef A parser sub.
+# @param JBD::Parser coderef A second parser sub.
+# @return JBD::Parser coderef cat() applied to arguments.
+sub paircat($$)  { pairwise \&cat, @_ }
+
+# @param JBD::Parser coderef A parser sub.
+# @param JBD::Parser coderef A second parser sub.
+# @return JBD::Parser coderef any() applied to arguments.
+sub pairany($$)  { pairwise \&any, @_ }
 
 1; 
