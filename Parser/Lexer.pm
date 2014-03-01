@@ -39,18 +39,18 @@ sub tokens($$;$) {
               ? $text : substr $text, 1, length($text)-1;
     }
 
-    push @tok, JBD::Parser::Token->end_of_input;
     ref $sift ? [grep $sift->($_), @tok] : \@tok;
 }
 
 # @param scalarref $text Unstructured/arbitrary text.
 # @param arrayref $matchers Pattern-matcher subs.
-# @param coderef [opt] $sift Input token filter, or undef.
+# @param hashref [opt] $opts Optional k/v pairs.
 # @return JBD::Parser::Input
 sub input($$;$) {
-    my ($text, $matchers) = (shift, shift);
-    my $sift = shift || sub {!$_->typeis(Space)};
+    my ($text, $matchers, $opts) = @_;
+    my $sift = $opts->{sift} || sub {!$_->typeis(Space)};
     my $tokens = tokens $text, $matchers, $sift;
+    push @$tokens, @{$opts->{tail}} if $opts->{tail};
     JBD::Parser::Input->new($tokens);
 }
 
