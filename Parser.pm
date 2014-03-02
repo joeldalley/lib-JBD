@@ -6,7 +6,6 @@
 package JBD::Parser;
 
 use overload '""' => sub { ref $_[0] || $_[0] },
-             '~'  => \&star,
              '^'  => \&paircat,
              '|'  => \&pairany;
 
