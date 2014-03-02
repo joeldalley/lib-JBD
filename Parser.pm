@@ -5,9 +5,9 @@
 
 package JBD::Parser;
 
-use overload '""' => sub { ref $_[0] || $_[0] },
-             '^'  => \&paircat,
-             '|'  => \&pairany;
+use overload '""' => sub($)  { ref $_[0] || $_[0] },
+             '^'  => sub($$) { cat(shift, shift) },
+             '|'  => sub($$) { any(shift, shift) };
 
 use JBD::Core::stern;
 use JBD::Core::Exporter ':omni';
@@ -137,20 +137,5 @@ sub trans($$) {
         ($trans->($tok), $in);
     };
 }
-
-# @param JBD::Parser coderef Ref to one of cat, any, etc.
-# @param array Arguments for the given cordref.
-# @return JBD::Parser codref The new parser sub.
-sub pairwise($@) { $_ = shift; $_->(@_[0, 1]) }
-
-# @param JBD::Parser coderef A parser sub.
-# @param JBD::Parser coderef A second parser sub.
-# @return JBD::Parser coderef cat() applied to arguments.
-sub paircat($$)  { pairwise \&cat, @_ }
-
-# @param JBD::Parser coderef A parser sub.
-# @param JBD::Parser coderef A second parser sub.
-# @return JBD::Parser coderef any() applied to arguments.
-sub pairany($$)  { pairwise \&any, @_ }
 
 1; 
