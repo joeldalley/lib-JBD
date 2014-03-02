@@ -12,7 +12,7 @@ use JBD::Core::stern;
 use JBD::Core::Exporter ':omni';
 
 use JBD::Parser::Lexer::Std 'Space';
-use JBD::Parser::Token;
+use JBD::Parser::Token 'token';
 use JBD::Parser::Input;
 use Carp 'croak';
 
@@ -27,16 +27,31 @@ sub tokens($$;$) {
     ref $text and croak 'Input must be scalar (text)';
 
     my @tok;
-    while (length $text) {
-        my $v;
-        MATCH: for my $m (@$matchers) {
-            ($text, $v) = $m->($text);
-            next unless defined $v;
-            push @tok, JBD::Parser::Token->new(ref $m, $v);
-            last MATCH;
+    while ($text) {
+        my ($type, $value) = ('', '');
+
+        for my $m (@$matchers) {
+            my $v = $m->($text) || '';
+            if (length $v > length $value) {
+                $type = ref $m;
+                $value = $v;
+            }
         }
-        $text = length $text < 2 || $v 
-              ? $text : substr $text, 1, length($text)-1;
+
+        my $lv = $value && length $value || 0;
+        my $lt = $text  && length $text  || 0;
+
+        if ($lv && $lt > $lv) {
+            $text = substr $text, $lv;
+        }
+        elsif ($lv && $lt == $lv) {
+            $text = undef;
+        }
+        elsif (!$lv) {
+            $text = $lt > 1 ? substr $text, 1 : undef;
+        }
+
+        push @tok, token $type, $value if $value;
     }
 
     ref $sift ? [grep $sift->($_), @tok] : \@tok;

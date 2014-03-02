@@ -5,7 +5,9 @@
 
 package JBD::Parser;
 
-use overload '""' => sub { ref $_[0] || $_[0] || 'Undef' },
+use overload '""' => sub { ref $_[0] || $_[0] },
+             '~'  => \&star,
+             '^'  => \&paircat,
              '&'  => \&paircat,
              '|'  => \&pairany;
 
@@ -13,7 +15,7 @@ use JBD::Core::stern;
 use JBD::Core::Exporter ':omni';
 use JBD::Core::List 'flatmap';
 
-use JBD::Parser::Token 'Nothing';
+use JBD::Parser::Token qw(token Nothing);
 use JBD::Parser::Input;
 use Carp 'croak';
 
@@ -21,10 +23,10 @@ use Carp 'croak';
 # @return JBD::Parser typed coderef.
 sub parser(&) { bless $_[0], __PACKAGE__ }
 
-# @param mixed $types One or more objects / strings.
-# @param mixed [opt] $value_is Token must match this value.
+# @param mixed One or more objects / strings.
+# @param mixed Token must match this value.
 # @return JBD::Parser typed coderef.
-sub is($;$) {
+sub pair($$) { 
     my $types = ref $_[0] eq 'ARRAY' ? shift : [shift];
     my $value_is = shift;
 
@@ -51,6 +53,10 @@ sub is($;$) {
         undef;
     };
 }
+
+# @param mixed One or more objects / strings.
+# @return JBD::Parser typed coderef.
+sub type($) { pair shift, undef }
 
 # @param array @p Zero ore more JBD::Parser subs.
 # @return JBD::Parser typed coderef.
@@ -105,8 +111,8 @@ sub any(@) {
 sub star($) {
     my $p = shift;
 
-    my $null = parser {(JBD::Parser::Token->nothing)};
-    my $s; $s = any cat($p, parser {$s->(@_)}), $null;
+    my $null = parser { (token Nothing) };
+    my $s; $s = ($p ^ parser { $s->(@_) }) | $null;
 
     # Note that any Nothing type tokens that may
     # have facilitated a star(*)-like match need to
@@ -133,28 +139,6 @@ sub trans($$) {
         ($trans->($tok), $in);
     };
 }
-
-# @param array Map of {Parser sub => token value}.
-# @return array Array of is(Type, Value) JBD::Parser subs.
-sub mapis(@) { 
-    croak 'Missing {Type => Value} map, for is()' unless @_;
-    croak 'Uneven number in given map' if @_ % 2;
-    my @is; while (@_) { push @is, is shift, shift } @is;
-}
-
-# mapp() -- 2nd "p" for Parser.
-# @param JBD::Parser coderef $p Mapping sub.
-# @param array Map of {Parser sub => token value}.
-# @return JBD::Parser typed coderef.
-sub mapp(&@) { my $p = shift; $p->(mapis @_) }
-
-# @param array Map of {Parser sub => token value}.
-# @return JBD::Parser typed coderef.
-sub mapcat(@) { mapp \&cat, @_ }
-
-# @param array Map of {Parser sub => token value}.
-# @return JBD::Parser typed coderef.
-sub mapany(@) { mapp \&any, @_ }
 
 # @param JBD::Parser coderef Ref to one of cat, any, etc.
 # @param array Arguments for the given cordref.

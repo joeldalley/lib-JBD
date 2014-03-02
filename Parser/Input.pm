@@ -7,7 +7,6 @@
 package JBD::Parser::Input;
 
 use JBD::Core::stern;
-use JBD::Parser::Token;
 
 use constant {
     TOK => 0,

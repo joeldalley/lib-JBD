@@ -14,6 +14,11 @@ use constant {
     End_of_Input => 'End_of_Input',
 };
 
+# @param string Token type.
+# @param mixed [opt] Token value.
+# @return JBD::Parser::Token
+sub token($;$) { __PACKAGE__->new(@_) }
+
 # @param string $class Object type.
 # @param string Token type.
 # @param mixed Token value, possibly undef.
@@ -22,14 +27,6 @@ sub new {
     my $class = shift;
     bless [@_], $class;
 }
-
-# @param string Object type.
-# @return JBD::Parser::Token
-sub nothing { shift->new(Nothing) }
-
-# @param string Object type.
-# @return JBD::Parser::Token
-sub end_of_input { shift->new(End_of_Input) }
 
 # @param JBD::Parser::Token
 # @return string Token type.

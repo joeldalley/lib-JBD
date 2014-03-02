@@ -13,11 +13,11 @@ use Module::Load 'load';
 # Packages and their symbols.
 my @map = (
     [qw| JBD::Parser 
-         parser is cat any star trans
-         mapis mapcat mapany 
+         parser pair type 
+         cat any star trans
     |],
     [qw| JBD::Parser::Token
-         Nothing End_of_Input
+         token Nothing End_of_Input
     |],
     [qw| JBD::Parser::Lexer
          tokens input
