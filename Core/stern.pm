@@ -7,10 +7,24 @@ package JBD::Core::stern;
 
 use strict;
 use warnings;
+use Data::Dumper();
+
+sub puke {
+    my $chunks = @_ > 1 ? [@_] : shift;
+    print Data::Dumper::Dumper $chunks;
+    exit;
+}
 
 sub import {
-    strict->import;
+    shift if (ref $_[0] || $_[0] || '') eq __PACKAGE__;
+
+    no strict 'refs';
+    my $depth = shift || 0;
+    *{(caller($depth))[0] . '::puke'} = \&puke;
+    use strict 'refs';
+
     warnings->import;
+    strict->import;
 }
 
 1;

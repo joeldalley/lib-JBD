@@ -33,9 +33,9 @@ sub symbols(@) { load shift, @_; @_ }
 
 # Export all symbols in @map.
 sub import() {
-    JBD::Core::stern->import;
     my $b = \&JBD::Core::Exporter::bind_to_caller;
     $b->((caller)[0], __PACKAGE__, symbols @$_) for @map;
+    JBD::Core::stern->import(1);
 }
 
 1;
