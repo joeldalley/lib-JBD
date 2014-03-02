@@ -8,7 +8,6 @@ package JBD::Parser;
 use overload '""' => sub { ref $_[0] || $_[0] },
              '~'  => \&star,
              '^'  => \&paircat,
-             '&'  => \&paircat,
              '|'  => \&pairany;
 
 use JBD::Core::stern;
@@ -111,13 +110,13 @@ sub any(@) {
 sub star($) {
     my $p = shift;
 
-    my $null = parser { (token Nothing) };
-    my $s; $s = ($p ^ parser { $s->(@_) }) | $null;
+    my $s; 
+    $s = ($p ^ parser {$s->(@_)}) 
+       | parser {(token Nothing)};
 
     # Note that any Nothing type tokens that may
     # have facilitated a star(*)-like match need to
     # be removed from $tok, before continuing.
-
     parser {
         my ($tok, $in) = $s->(@_);
         $tok = ref $tok eq 'ARRAY' ? $tok : [$tok];
