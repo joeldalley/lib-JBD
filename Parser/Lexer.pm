@@ -18,6 +18,19 @@ use Carp 'croak';
 
 # @param scalar $text Unstructured/arbitrary text.
 # @param arrayref $matchers Pattern-matcher subs.
+# @param coderef $want Token value requirement sub.
+# @return mixed Array of (type, value), or undef.
+sub next_match($$&) {
+    my ($text, $matchers, $want) = @_;
+    for my $m (@$matchers) {
+        my $v = $m->($text);
+        return [ref $m, $v] if $want->($v);
+    }
+    undef;
+}
+
+# @param scalar $text Unstructured/arbitrary text.
+# @param arrayref $matchers Pattern-matcher subs.
 # @param coderef [opt] $sift Input token filter, or undef.
 # @return arrayref An array of JBD::Parser::Tokens.
 sub tokens($$;$) {
@@ -28,18 +41,13 @@ sub tokens($$;$) {
 
     my @tok;
     while (length $text) {
-        my ($type, $value) = ('', '');
-
-        for my $m (@$matchers) {
-            my $v = $m->($text);
-            $v = '' unless defined $v;
-            if (length $v > length $value) {
-                $type = ref $m;
-                $value = $v;
-            }
-        }
-
-        my $lv = defined $value && length $value || 0;
+        my @best = ('', '');
+        my $pair = next_match $text, $matchers, sub { 
+            my $v = shift or return;
+            length $v > length $best[0] 
+        };
+        @best = @$pair if ref $pair;
+        my $lv = ref $pair && length $pair->[1] || 0;
         my $lt = defined $text  && length $text  || 0;
 
         if ($lv && $lt > $lv) {
@@ -52,8 +60,8 @@ sub tokens($$;$) {
             $text = $lt > 1 ? substr $text, 1 : undef;
         }
 
-        next unless defined $value && length $value;
-        push @tok, token $type, $value;
+        next unless defined $pair->[1] && length $pair->[1];
+        push @tok, token shift @best, shift @best;
     }
 
     ref $sift ? [grep $sift->($_), @tok] : \@tok;
