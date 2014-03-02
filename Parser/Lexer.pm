@@ -27,19 +27,20 @@ sub tokens($$;$) {
     ref $text and croak 'Input must be scalar (text)';
 
     my @tok;
-    while ($text) {
+    while (length $text) {
         my ($type, $value) = ('', '');
 
         for my $m (@$matchers) {
-            my $v = $m->($text) || '';
+            my $v = $m->($text);
+            $v = '' unless defined $v;
             if (length $v > length $value) {
                 $type = ref $m;
                 $value = $v;
             }
         }
 
-        my $lv = $value && length $value || 0;
-        my $lt = $text  && length $text  || 0;
+        my $lv = defined $value && length $value || 0;
+        my $lt = defined $text  && length $text  || 0;
 
         if ($lv && $lt > $lv) {
             $text = substr $text, $lv;
@@ -51,7 +52,8 @@ sub tokens($$;$) {
             $text = $lt > 1 ? substr $text, 1 : undef;
         }
 
-        push @tok, token $type, $value if $value;
+        next unless defined $value && length $value;
+        push @tok, token $type, $value;
     }
 
     ref $sift ? [grep $sift->($_), @tok] : \@tok;
