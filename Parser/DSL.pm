@@ -20,7 +20,7 @@ my @map = (
          token Nothing End_of_Input
     |],
     [qw| JBD::Parser::Lexer
-         tokens input
+         match tokens input
     |],
     [qw| JBD::Parser::Lexer::Std
          Word Space Op Int Float Ratio Dot

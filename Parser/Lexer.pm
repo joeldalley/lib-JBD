@@ -20,7 +20,7 @@ use Carp 'croak';
 # @param arrayref $matchers Pattern-matcher subs.
 # @param coderef $want Token value requirement sub.
 # @return mixed Array of (type, value), or undef.
-sub next_match($$&) {
+sub match($$&) {
     my ($text, $matchers, $want) = @_;
     for my $m (@$matchers) {
         my $v = $m->($text);
@@ -42,7 +42,7 @@ sub tokens($$;$) {
     my @tok;
     while (length $text) {
         my @best = ('', '');
-        my $pair = next_match $text, $matchers, sub { 
+        my $pair = match $text, $matchers, sub { 
             my $v = shift or return;
             length $v > length $best[0] 
         };
