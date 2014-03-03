@@ -9,6 +9,12 @@ use JBD::Core::stern;
 use JBD::Core::Exporter ':omni';
 use JBD::Core::List 'flatmap';
 
+use overload '""' => sub { 
+    my $this = shift;
+    my $v = defined $this->value ? $this->value : 'UNDEF';
+    join ': ', $this->type, $v;
+};
+
 use constant {
     Nothing      => 'Nothing',
     End_of_Input => 'End_of_Input',

@@ -43,7 +43,8 @@ sub tokens($$;$) {
     while (length $text) {
         my @best = ('', '');
         my $pair = match $text, $matchers, sub { 
-            my $v = shift or return;
+            my $v = shift;
+            return unless defined $v;
             length $v > length $best[0] 
         };
         @best = @$pair if ref $pair;
