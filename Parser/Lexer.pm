@@ -18,10 +18,11 @@ use Carp 'croak';
 
 # @param scalar $text Unstructured/arbitrary text.
 # @param arrayref $matchers Pattern-matcher subs.
-# @param coderef $want Token value requirement sub.
+# @param coderef [opt] $want Token value requirement sub.
 # @return mixed Array of (type, value), or undef.
-sub match($$&) {
-    my ($text, $matchers, $want) = @_;
+sub match($$;$) {
+    my ($text, $matchers) = (shift, shift);
+    my $want = shift || sub {defined $_[0]};
     for my $m (@$matchers) {
         my $v = $m->($text);
         return [ref $m, $v] if $want->($v);
@@ -32,14 +33,15 @@ sub match($$&) {
 # @param scalar $text Unstructured/arbitrary text.
 # @param arrayref $matchers Pattern-matcher subs.
 # @param coderef [opt] $sift Input token filter, or undef.
-# @return arrayref An array of JBD::Parser::Tokens.
+# @return scalar: An arrayref of JBD::Parser::Tokens.
+#         array: ([JBD::Parser::Tokens], length of tokenized text).
 sub tokens($$;$) {
     my $text = shift;
     my ($matchers, $sift) = @_;
 
     ref $text and croak 'Input must be scalar (text)';
 
-    my @tok;
+    my (@tok, $matched);
     while (length $text) {
         my @best = ('', '');
         my $pair = match $text, $matchers, sub { 
@@ -47,9 +49,9 @@ sub tokens($$;$) {
             return unless defined $v;
             length $v > length $best[0] 
         };
-        @best = @$pair if ref $pair;
         my $lv = ref $pair && length $pair->[1] || 0;
-        my $lt = defined $text  && length $text  || 0;
+        ref $pair && do {@best = @$pair; $matched += $lv};
+        my $lt = defined $text && length $text  || 0;
 
         if ($lv && $lt > $lv) {
             $text = substr $text, $lv;
@@ -65,7 +67,8 @@ sub tokens($$;$) {
         push @tok, token shift @best, shift @best;
     }
 
-    ref $sift ? [grep $sift->($_), @tok] : \@tok;
+    @tok = ref $sift ? grep $sift->($_), @tok : @tok;
+    wantarray ? (\@tok, $matched) : \@tok;
 }
 
 # @param scalarref $text Unstructured/arbitrary text.
