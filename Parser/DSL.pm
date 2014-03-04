@@ -23,7 +23,7 @@ my @map = (
          match tokens input
     |],
     [qw| JBD::Parser::Lexer::Std
-         Word Space Op Int Float Ratio Dot
+         Word Space Op Num Int Float Ratio Dot
     |],
     );
 
