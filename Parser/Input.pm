@@ -10,8 +10,9 @@ use JBD::Core::stern;
 
 use constant {
     TOK => 0,
-    CNT => 1, 
+    CNT => 1,
     POS => 2,
+    MAX => 3,
 };
 
 # @param string $type Object type.
@@ -23,12 +24,17 @@ sub new {
     $fields->[TOK] = $tokens;
     $fields->[CNT] = scalar @$tokens;
     $fields->[POS] = 0;
+    $fields->[MAX] = 0;
     bless $fields, $type;
 }
 
 # @param JBD::Parser::Input
 # @return arrayref Array of JBD::Parser::Tokens.
 sub tokens { shift->[TOK] }
+
+# @param JBD::Parser::Input
+# @return int The highest-numbered array position reached.
+sub max { shift->[MAX] }
 
 # @param JBD::Parser::Input $this
 # @return string A JBD::Parser::Token.
@@ -41,8 +47,9 @@ sub current {
 # @return int Cursor position, after advance.
 sub advance_cursor {
     my $this = shift;
-    $this->[POS] = $this->num_left 
-                 ? $this->[POS] + 1 : $this->[POS];
+    $this->[POS] += 1 if $this->num_left;
+    $this->[MAX] = $this->[POS] if $this->[POS] > $this->[MAX];
+    $this->[POS];
 }
 
 # @param JBD::Parser::Input $this

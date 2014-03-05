@@ -14,6 +14,7 @@ use JBD::Core::Exporter ':omni';
 use JBD::Parser::Lexer::Std 'Space';
 use JBD::Parser::Token 'token';
 use JBD::Parser::Input;
+use Scalar::Util ();
 use Carp 'croak';
 
 # @param scalar $text Unstructured/arbitrary text.
@@ -24,6 +25,9 @@ sub match($$;$) {
     my ($text, $matchers) = (shift, shift);
     my $want = shift || sub {defined $_[0]};
     for my $m (@$matchers) {
+        croak "Element in matcher subs array "
+            . "isn't CODE given text: `$text`" 
+            if Scalar::Util::reftype $m ne 'CODE';
         my $v = $m->($text);
         return [ref $m, $v] if $want->($v);
     }
@@ -77,8 +81,7 @@ sub tokens($$;$) {
 # @return JBD::Parser::Input
 sub input($$;$) {
     my ($text, $matchers, $opts) = @_;
-    my $sift = $opts->{sift} || sub {!$_->typeis(Space)};
-    my $tokens = tokens $text, $matchers, $sift;
+    my $tokens = tokens $text, $matchers, $opts->{sift};
     push @$tokens, @{$opts->{tail}} if $opts->{tail};
     JBD::Parser::Input->new($tokens);
 }

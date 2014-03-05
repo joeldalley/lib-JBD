@@ -11,14 +11,14 @@ no strict 'refs';
 
 # Map of {Package symbol => pattern-matcher sub}.
 my %map = (
-    Num   => sub { my $n =  _num(shift);                $n},
-    Space => sub { shift =~ qr{^(\s+)}o;                $1},
-    Word  => sub { shift =~ qr{^([a-z\.]+)}io;          $1},
-    Float => sub { my $f =  _float(shift);              $f},
-    Ratio => sub { shift =~ qr{^([-+]?\d+/[-+]?\d+)}o;  $1},
-    Int   => sub { shift =~ qr{^([-+]?\d+)}o;           $1},
-    Dot   => sub { shift =~ qr{^(\.+)}o;                $1},
-    Op    => sub { my $o =  _op(shift);                 $o},
+    Unsigned => sub { my $n = _num(shift, 'unsigned'); $n},
+    Signed   => sub { my $n = _num(shift, 'signed');   $n},
+    Num      => sub { my $n = _num(shift);             $n},
+    Float    => sub { my $f = _float(shift);           $f},
+    Int      => sub { shift =~ qr{^([-+]?\d+)}o;       $1},
+    Op       => sub { my $o = _op(shift);              $o},
+    Space    => sub { shift =~ qr{^(\s+)}o;            $1},
+    Word     => sub { shift =~ qr{^(\w+)}io;           $1},
     );
 
 # @return array All map symbols.
@@ -48,14 +48,20 @@ sub _float($) {
 }
 
 # @param string $chars Input characters.
+# @param string [opt] $spec Specify signed or unsigned.
 # @return Matched number, or undef.
-sub _num($) {
-    no strict 'refs';
-    my $chars = shift;
+sub _num($;$) {
+    my ($chars, $spec) = @_;
+
     # Order matters!
-    for ('Float', 'Int') { 
+    no strict 'refs';
+    for (qw(Float Int)) { 
         my $n = &$_->($chars);
-        return $n if defined $n;
+        next unless defined $n;
+        return $n if !defined $spec;
+        $n =~ /^[\+-]/o;
+        return $n if $spec eq 'unsigned' && $n !~ /^[\+-]/o
+                  || $spec eq 'signed'   && $n =~ /^[\+-]/o;
     }
     undef;
 }
