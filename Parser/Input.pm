@@ -72,4 +72,19 @@ sub num_left {
     $this->[CNT] - $this->[POS];
 }
 
+# @param JBD::Parser::Input $this
+# @return string Parse error message.
+sub parse_error {
+    my $this = shift;
+    my ($tok, $max) = ($this->tokens, $this->max);
+
+    my $lo = $max ? $max-1 : 0;
+    my $hi = $#$tok - $lo > 2 ? $lo + 2 : $#$tok;
+
+    my $show = ($max > 1 ? ' ... ' : '')
+             . join ' ', map $_->value,
+                         grep $_->value, @$tok[$lo .. $hi];
+    "Parse error: Parsed $max tokens before error `$show`";
+}
+
 1; 
