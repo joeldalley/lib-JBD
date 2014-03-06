@@ -60,8 +60,8 @@ sub _num($;$) {
         next unless defined $n;
         return $n if !defined $spec;
         $n =~ /^[\+-]/o;
-        return $n if $spec eq 'unsigned' && $n !~ /^[\+-]/o
-                  || $spec eq 'signed'   && $n =~ /^[\+-]/o;
+        return $n if $spec eq 'unsigned' && !defined $1 
+                  || $spec eq 'signed'   &&  defined $1;
     }
     undef;
 }
