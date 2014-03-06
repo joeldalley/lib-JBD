@@ -1,8 +1,22 @@
 
-# Subs for lexing the given input against the given patterns.
-# input() wraps tokens(), and applies a useful default input
-# token array filter--it removes white spaces--and returns
-# a JBD::Parser::Input, suitable for passing to a Parser sub.
+# match()  - Determines the token (type, value) pair for
+#            the given text and associated pattern-matcher
+#            subs. Matcher subs array order is important.
+#            The first sub that yields a pair is returned.
+#
+# tokens() - Iterates over match() with its input text, 
+#            and chooses whichever token (type, value) pair 
+#            match has the longest value (character count).
+#            In this manner, input text of '-1.0' with 
+#            matcher subs Int and Float defined in
+#            JBD::Parser::Lexer::Std would lex like this:
+#
+#            Int->('-1.0')   --> '-1'   match len: 2.
+#            Float->('-1.0') --> '-1.0' match len: 4.
+#                ====> Float is chosen.
+#
+# input() - Shorthand for tokens() + JBD::Parser::Input->new.
+
 # @author Joel Dalley
 # @version 2014/Feb/23
 
@@ -11,10 +25,9 @@ package JBD::Parser::Lexer;
 use JBD::Core::stern;
 use JBD::Core::Exporter ':omni';
 
-use JBD::Parser::Lexer::Std 'Space';
 use JBD::Parser::Token 'token';
+use Scalar::Util 'reftype';
 use JBD::Parser::Input;
-use Scalar::Util ();
 use Carp 'croak';
 
 # @param scalar $text Unstructured/arbitrary text.
@@ -25,9 +38,15 @@ sub match($$;$) {
     my ($text, $matchers) = (shift, shift);
     my $want = shift || sub {defined $_[0]};
     for my $m (@$matchers) {
-        croak "Element in matcher subs array "
-            . "isn't CODE given text: `$text`" 
-            if Scalar::Util::reftype $m ne 'CODE';
+        my ($mtype, $mref) = (ref $m, reftype $m);
+
+        croak 'Element valued `' . substr($m, 0, 24) . '`'
+            . " is not a CODE ref; given text `$text`"
+            unless $mtype;
+        croak "Element reference typed `$mtype` in matchers"
+            . " array isn't CODE; given text `$text`" 
+            unless $mref eq 'CODE';
+
         my $v = $m->($text);
         return [ref $m, $v] if $want->($v);
     }
