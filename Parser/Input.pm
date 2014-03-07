@@ -77,13 +77,10 @@ sub num_left {
 sub parse_error {
     my $this = shift;
     my ($tok, $max) = ($this->tokens, $this->max);
-
     my $lo = $max ? $max-1 : 0;
     my $hi = $#$tok - $lo > 2 ? $lo + 2 : $#$tok;
-
-    my $show = ($max > 1 ? ' ... ' : '')
-             . join ' ', map $_->value,
-                         grep $_->value, @$tok[$lo .. $hi];
+    my @show = grep $_, map $_->value, @$tok[$lo .. $hi];
+    my $show = ($max > 1 ? ' ... ' : '') . join ' ', @show;
     "Parse error: Parsed $max tokens before error `$show`";
 }
 
