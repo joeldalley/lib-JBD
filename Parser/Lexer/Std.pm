@@ -59,7 +59,7 @@ sub _num($;$) {
         my $n = &$_->($chars);
         next unless defined $n;
         return $n if !defined $spec;
-        $n =~ /^[\+-]/o;
+        $n =~ /^([\+-])/o;
         return $n if $spec eq 'unsigned' && !defined $1 
                   || $spec eq 'signed'   &&  defined $1;
     }
