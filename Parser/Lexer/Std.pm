@@ -11,23 +11,26 @@ no strict 'refs';
 
 # Map of {Package symbol => pattern-matcher sub}.
 my %map = (
-    Unsigned => sub { my $n = _num(shift, 'unsigned'); $n},
-    Signed   => sub { my $n = _num(shift, 'signed');   $n},
-    Num      => sub { my $n = _num(shift);             $n},
-    Float    => sub { my $f = _float(shift);           $f},
-    Int      => sub { shift =~ qr{^([-+]?\d+)}o;       $1},
-    Op       => sub { my $o = _op(shift);              $o},
-    Space    => sub { shift =~ qr{^(\s+)}o;            $1},
-    Word     => sub { shift =~ qr{^(\w+)}io;           $1},
+    Num      => sub { _Num(shift)                  },
+    Unsigned => sub { _num(shift, 'unsigned')      },
+    Signed   => sub { _num(shift, 'signed')        },
+    Float    => sub { _float(shift)                },
+    Int      => sub { shift =~ qr{^([-+]?\d+)}o; $1},
+    Op       => sub { _op(shift)                   },
+    Space    => sub { shift =~ qr{^(\s+)}o;      $1},
+    Word     => sub { shift =~ qr{^(\w+)}io;     $1},
     );
-
-# @return array All map symbols.
-sub std_symbols() { sort keys %map }
+my @std_symbols;
 
 # Transform symbol definitions into package symbols.
 while (my ($sym, $sub) = each %map) {
+    my $typed = sub { bless $sub, $sym };
     *{__PACKAGE__ . "::$sym"} = sub { bless $sub, $sym };
+    push @std_symbols, bless $sub, $sym;
 }
+
+# @return array All map symbols.
+sub std_symbols() { @std_symbols }
 
 # @param string Input characters.
 # @return Matched operator character, or undef.
@@ -64,6 +67,14 @@ sub _num($;$) {
                   || $spec eq 'signed'   &&  defined $1;
     }
     undef;
+}
+
+# @param string $chars Input characters.
+# @return Matched number, or undef.
+sub _Num($) {
+    my $chars = shift;
+    my $s = _num($chars, 'signed');
+    defined $s ? $s : _num($chars, 'unsigned');
 }
 
 1;

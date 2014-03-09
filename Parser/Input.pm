@@ -33,8 +33,23 @@ sub new {
 sub tokens { shift->[TOK] }
 
 # @param JBD::Parser::Input
+# @return int Token count.
+sub count { shift->[CNT] }
+
+# @param JBD::Parser::Input
+# @return int Cursor position.
+sub cursor { shift->[POS] }
+
+# @param JBD::Parser::Input
 # @return int The highest-numbered array position reached.
 sub max { shift->[MAX] }
+
+# @param JBD::Parser::Input $this
+# @return int Number of JBD::Parser::Tokens left.
+sub num_left { 
+    my $this = shift;
+    $this->[CNT] - $this->[POS];
+}
 
 # @param JBD::Parser::Input $this
 # @return string A JBD::Parser::Token.
@@ -59,17 +74,6 @@ sub retreat_cursor {
     my ($this, $moves) = @_;
     $this->[POS] = $this->[POS] > $moves
                  ? $this->[POS] - $moves : 0;
-}
-
-# @param JBD::Parser::Input
-# @return int Cursor position.
-sub cursor { shift->[POS] }
-
-# @param JBD::Parser::Input $this
-# @return int Number of JBD::Parser::Tokens left.
-sub num_left { 
-    my $this = shift;
-    $this->[CNT] - $this->[POS];
 }
 
 # @param JBD::Parser::Input $this
