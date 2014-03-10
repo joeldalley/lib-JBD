@@ -37,14 +37,14 @@ sub shuffle(@) {
 # @param array An even-sized array.
 # @return array A zip-ordered array (1st half, 2nd half).
 sub zip(@) { 
-    croak 'Odd number of elements in zip' if @_ % 2;
+    push @_, undef if @_ % 2;
     @_[map {$_, $_ + @_/2} 0 .. (@_/2 - 1)];
 }
 
 # @param array An even-sized array.
 # @return coderef An iterator of pairs from the array.
 sub pairsof(@) {
-    croak 'Odd number of elements in pairsof' if @_ % 2;
+    push @_, undef if @_ % 2;
     my @L = @_; sub {@L ? [shift @L, shift @L] : undef};
 }
 
