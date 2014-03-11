@@ -4,13 +4,38 @@
 # @author Joel Dalley
 # @version 2014/Mar/09
 
-use JBD::Parser::Lexer::Std 'std_symbols';
 use JBD::Parser::DSL;
 
 my @hist;
 my @stack;
-my $parser;
-my $lextypes;
+
+my $lextypes; set_lextypes(shift);
+my $parser; set_parser(shift);
+
+sub set_lextypes {
+    my $in = shift;
+    defined $in or return;
+    my $val = eval "[$in]";
+    return if $@ || !@$val;
+    my $have_all = 1;
+    M: for my $m (@$val) {
+        next M if grep ref $m eq ref $_, std_symbols;
+        $have_all = 0;
+        last M;
+    }
+    $lextypes = $val if !$@ && $have_all;
+}
+
+sub set_parser {
+    my $in = shift;
+    defined $in or return;
+    my $ans = eval $in;
+    return if $@ || ref $ans ne 'JBD::Parser';
+    $parser = $ans;
+    print " : > Enter one or more strings to parse.\n",
+          " : > Enter 'END' to parse strings.\n";
+    push @hist, $in;
+}
 
 while (1) {
     if    (!$lextypes) { print " : > Lex for types: \n : > " }
@@ -24,13 +49,12 @@ while (1) {
         print " : >\n";
         while (defined(my $text = shift @stack)) {
             print " : > Parse $text\n";
-            my $stream = input $text, $lextypes;
-            my ($tok) = $parser->($stream);
-            print ref $tok && @$tok
-                ? join("\n", map(" : > \tToken[$_]", @$tok)) . 
-                  "\n : > \n"
-                : (ref $tok ? 'No matches' : 'Undefined') .
-                  "\n : > \n";
+            my $pst = parser_state tokens $text, $lextypes;
+            my $tokens = $parser->($pst);
+            print $tokens
+                ? join("\n", map(" : > \ttoken[$_]", @$tokens))
+                : " : > \tUndefined";
+            print "\n : > \n";
         }
         $parser = undef;
     }
@@ -52,26 +76,7 @@ while (1) {
             $parser = $ans if !$@;
         }
     }
-    elsif (!$lextypes) {
-        my $val = eval "[$in]";
-        next if $@ || !@$val;
-        my $have_all = 1;
-        M: for my $m (@$val) {
-            next M if grep ref $m eq ref $_, std_symbols;
-            $have_all = 0;
-            last M;
-        }
-        $lextypes = $val if !$@ && $have_all;
-    }
-    elsif (!$parser) {
-        my $ans = eval $in;
-        next if $@ || ref $ans ne 'JBD::Parser';
-        $parser = $ans;
-        print " : > Enter one or more strings to parse.\n",
-              " : > Enter 'END' to parse strings.\n";
-        push @hist, $in;
-    }
-    else {
-        push @stack, $in;
-    }
+    elsif (!$lextypes) { set_lextypes($in) }
+    elsif (!$parser)   { set_parser($in)   }
+    else               { push @stack, $in  }
 }

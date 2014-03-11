@@ -20,9 +20,13 @@ my @map = (
          token Nothing End_of_Input
     |],
     [qw| JBD::Parser::Lexer
-         match tokens input
+         match tokens 
+    |],
+    [qw| JBD::Parser::State
+         parser_state
     |],
     [qw| JBD::Parser::Lexer::Std
+         std_symbols
          Signed Unsigned Num Int Float
          Word Space Op 
     |],

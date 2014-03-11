@@ -12,9 +12,7 @@ use overload '""' => sub($)  { ref $_[0] || $_[0] },
 use JBD::Core::stern;
 use JBD::Core::Exporter ':omni';
 use JBD::Core::List 'flatmap';
-
 use JBD::Parser::Token qw(token Nothing);
-use JBD::Parser::Input;
 use Carp 'croak';
 
 # @param codref A code block.
@@ -32,22 +30,30 @@ sub pair($$) {
 
     # Is the current token of one of the given types?
     parser {
-        my $in = shift;
-        my $tok = $in->current or return;
+        my $pst = shift;
+
+        return if $pst->done_parsing;
+        $pst->begin_parse_frame;
+        my $token = $pst->current_lexed_token;
+        puke {CURRENT => $token, TYPES => $types};
 
         for my $type (@$types) {
-            # If $type is a string, then its value stays.
-            # If $type is an object, update to object's type.
             $type = ref $type || $type;
+            print "TYPE: $type\n";
+            $pst->add_parse_frame_matcher($type);
+            puke $pst;
 
             # Check for token type / value match. 
-            next unless $tok->typeis($type, Nothing);
-            next if defined $value_is && $tok->ne($value_is);
+            next unless $token->typeis($type, Nothing);
+            next if defined $value_is && $token->ne($value_is);
             
             # Success.
-            my $pos = $in->advance_cursor;
-            return ([$tok], $in);
+            $pst->finish_parse_frame;
+            return [$token];
         }
+
+        my $msg = "Unable to parse [$token]";
+        $pst->parse_frame_error($msg);
         undef;
     };
 }
@@ -64,23 +70,13 @@ sub cat(@) {
 
     # Do the given N parsers succeed consecutively?
     parser {
-        my $in = shift;
-        my ($moves, @tok) = (0, ());
-
+        my $pst = shift;
+        my @tokens;
         for my $p (@p) {
-            my ($tok) = $p->($in);
-
-            if (defined $tok) {
-                my @flat = flatmap $tok;
-                push @tok, @flat;
-                $moves += @flat;
-                next;
-            }
-
-            $in->retreat_cursor($moves) if $moves;
-            return;
+            my $tokens = $p->($pst) or return;
+            push @tokens, flatmap $tokens;
         }
-        (\@tok, $in);
+        \@tokens;
     };
 }
 
@@ -95,10 +91,10 @@ sub any(@) {
 
     # Does at least 1 of N given parsers succeed?
     parser {
-        my $in = shift;
+        my $pst = shift;
         for (@p) {
-            my ($tok) = $_->($in);
-            return ($tok, $in) if defined $tok;
+            my $tokens = $_->($pst);
+            return $tokens if $tokens;
         }
         undef;
     };
@@ -111,16 +107,14 @@ sub star($) {
 
     my $s; 
     $s = ($p ^ parser {$s->(@_)}) 
-       | parser {(token Nothing)};
+       | parser {[token Nothing]};
 
     # Note that any Nothing type tokens that may
     # have facilitated a star(*)-like match need to
     # be removed from $tok, before continuing.
     parser {
-        my ($tok, $in) = $s->(@_);
-        $tok = ref $tok eq 'ARRAY' ? $tok : [$tok];
-        $tok = [grep !$_->typeis(Nothing), @$tok];
-        ($tok, $in);
+        my $tokens = $s->(@_) or return;
+        [grep !$_->typeis(Nothing), @$tokens];
     };
 }
 
@@ -131,10 +125,9 @@ sub trans($$) {
     my ($p, $trans) = @_;
 
     parser {
-        my $in = shift;
-        my ($tok) = $p->($in);
-        return unless defined $tok;
-        ($trans->($tok), $in);
+        my $pst = shift;
+        my $tokens = $p->($pst) or return;
+        $trans->($tokens);
     };
 }
 
