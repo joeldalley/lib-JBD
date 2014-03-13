@@ -80,7 +80,7 @@ sub type($) { pair shift, undef }
 sub cat(@) {
     my @p = @_;
     return parser {} unless @p;
-    #return $p[0] if @p == 1;
+    return $p[0] if @p == 1;
 
     # Do the given N parsers succeed consecutively?
     parser {
