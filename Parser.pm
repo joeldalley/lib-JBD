@@ -13,7 +13,6 @@ use JBD::Core::stern;
 use JBD::Core::List 'flatmap';
 use JBD::Core::Exporter ':omni';
 use JBD::Parser::Token qw(token Nothing);
-
 use Carp 'croak';
 
 # @param codref A code block.
