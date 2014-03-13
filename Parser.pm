@@ -28,8 +28,8 @@ sub stack_tracer($$) {
 
     sub {
         my $tok  = defined $_[0] ? shift : 'MISSING';
-        my $pval = defined $val ? $val : 'ANY';
-        my $args = "Token[$tok], $type\[$pval\]";
+        my $pval = defined $val ? $val : 'UNDEF';
+        my $args = qq|"$type: $pval" )->( "$tok"|;
 
         my @trace;
         for (my $i = 0; defined caller($i); $i++) {
@@ -61,7 +61,7 @@ sub pair($$) {
  
         if ($token->typeis($type, Nothing) &&
             (!defined $value || $token->eq($value))) {
-            $pst->finish_parse_frame;
+            $pst->parse_frame_success;
             return [$token];
         }
         else {

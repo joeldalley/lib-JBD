@@ -33,6 +33,8 @@ sub printer($$$) {
 my $Num = type Num;
 my $Word = type Word;
 my $Float = type Float;
+my $Signed = type Signed;
+my $Unsigned = type Unsigned;
 my $plus = pair Op, '+';
 my $o_paren = pair Op, '(';
 my $c_paren = pair Op, ')';
@@ -76,6 +78,10 @@ STAR: {
     printer '1 2 3 foo bar baz', (
         star $Num ^ star $Word
         ), [Word, Num];
+
+    printer '1 -2 foo 23.1 bar', (
+        star($Signed | $Unsigned) ^ star($Word | $Unsigned)
+        ), [Signed, Unsigned, Word];
 }
 
 TRANS: {

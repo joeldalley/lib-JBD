@@ -9,7 +9,7 @@ package JBD::Parser::State;
 use JBD::Core::stern;
 use JBD::Core::Exporter ':omni';
 
-object_preliminaries: {
+configure_object: {
     no strict 'refs';
     my %h = (lexed_tokens => 0, 
              lexed_count  => 1,
@@ -30,7 +30,6 @@ sub parser_state($) { __PACKAGE__->new(shift) }
 sub new {
     my ($type, $lexed_tokens) = @_;
     my $this = bless [$lexed_tokens, 0, 0, {}], $type;
-
     $this->lexed_count = @{$this->lexed_tokens};
     $this;
 }
@@ -47,13 +46,6 @@ sub current_lexed_token {
 sub begin_parse_frame { shift->parse_frame = {} }
 
 # @param JBD::Parser::State $this
-# @return The number of lexed tokens that are now parsed.
-sub finish_parse_frame {
-    my $this = shift;
-    $this->parsed_count = $this->parse_frame_cursor('+');
-}
-
-# @param JBD::Parser::State $this
 # @param string $type A JBD::Parser::Token type.
 # @param mixed [opt] $val Optional token value.
 sub parse_frame_pair_args {
@@ -61,7 +53,7 @@ sub parse_frame_pair_args {
     $this->parse_frame->{pair_args} = []
         if !exists $this->parse_frame->{pair_args};
     push @{$this->parse_frame->{pair_args}},
-         "{$type, " . (defined $val ? $val : 'UNDEF') . '}';
+         qq|"$type: | . (defined $val ? $val : 'UNDEF') . '"';
 }
 
 # @param JBD::Parser::State $this
@@ -72,6 +64,13 @@ sub parse_frame_cursor {
     my $C = $this->parse_frame->{cursor} || $this->parsed_count;
     $C = defined $pos ? $pos eq '+' ? $C + 1 : $pos : $C;
     $this->parse_frame->{cursor} = $C;
+}
+
+# @param JBD::Parser::State $this
+# @return The number of lexed tokens that are now parsed.
+sub parse_frame_success {
+    my $this = shift;
+    $this->parsed_count = $this->parse_frame_cursor('+');
 }
 
 # @param JBD::Parser::State $this
@@ -89,7 +88,15 @@ sub error_string {
     my $e = $pf->{error} || 'ERROR MISSING';
     my $m = join ', ', @{$pf->{pair_args}};
     my $l = $this->current_lexed_token;
-    "\nCould not parse `$l` with `$m`\n$e\n\n";
+    my $lexed = $this->lexed_tokens;
+    my $cnt = $this->parsed_count;
+    my $near = '... ' . join ' ', 
+               map {$_->value ? $_->value : $_->type}
+               grep $_, @$lexed[$cnt .. $cnt + 2];
+
+    return "Parsed $cnt tokens before error near "
+         . "`$near`.\nCould not parse token `$l` with"
+         . qq| the type, value pair $m.\n$e\n\n|;
 }
 
 # @param JBD::Parser::State $this
