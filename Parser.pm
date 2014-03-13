@@ -1,5 +1,5 @@
 
-# Provides parsing primitives.
+# Parsing primitives.
 # @author Joel Dalley
 # @version 2014/Feb/22 
 
@@ -10,51 +10,64 @@ use overload '""' => sub($)  { ref $_[0] || $_[0] },
              '|'  => sub($$) { any(shift, shift) };
 
 use JBD::Core::stern;
-use JBD::Core::Exporter ':omni';
 use JBD::Core::List 'flatmap';
+use JBD::Core::Exporter ':omni';
 use JBD::Parser::Token qw(token Nothing);
+
 use Carp 'croak';
 
 # @param codref A code block.
 # @return JBD::Parser typed coderef.
 sub parser(&) { bless $_[0], __PACKAGE__ }
 
-# @param mixed One or more objects / strings.
+# @param string $type A token type.
+# @param mixed $val A token value, possibly undef.
+# @return coderef A stack trace printer sub.
+sub stack_tracer($$) {
+    my ($type, $val) = @_;
+
+    sub {
+        my $tok  = defined $_[0] ? shift : 'MISSING';
+        my $pval = defined $val ? $val : 'ANY';
+        my $args = "Token[$tok], $type\[$pval\]";
+
+        my @trace;
+        for (my $i = 0; defined caller($i); $i++) {
+            my ($pkg, $line, $sub) = (caller($i))[0, 2, 3];
+            my $tab = $i ? ' ' : "\t ";
+            push @trace, "$tab pair( $args ) called by "
+                       . "$pkg at line $line";
+        }
+        join "\n", reverse @trace;
+    };
+}
+
+# @param mixed An object or a string.
 # @param mixed Token must match this value.
 # @return JBD::Parser typed coderef.
 sub pair($$) { 
-    my $types = ref $_[0] eq 'ARRAY' ? shift : [shift];
-    my $value_is = shift;
+    my ($type, $value) = (ref $_[0] || $_[0], $_[1]);
+    croak 'Token value must be scalar' if ref $value;
+    my $tracer = stack_tracer $type, $value;
 
-    croak 'Token value must be scalar' if ref $value_is;
-
-    # Is the current token of one of the given types?
+    # Is the current token of the given type?
     parser {
         my $pst = shift;
 
-        return if $pst->done_parsing;
-        $pst->begin_parse_frame;
         my $token = $pst->current_lexed_token;
-        puke {CURRENT => $token, TYPES => $types};
-
-        for my $type (@$types) {
-            $type = ref $type || $type;
-            print "TYPE: $type\n";
-            $pst->add_parse_frame_matcher($type);
-            puke $pst;
-
-            # Check for token type / value match. 
-            next unless $token->typeis($type, Nothing);
-            next if defined $value_is && $token->ne($value_is);
-            
-            # Success.
+        return if !$token || $pst->done_parsing;
+        $pst->begin_parse_frame;
+        $pst->parse_frame_pair_args($type, $value);
+ 
+        if ($token->typeis($type, Nothing) &&
+            (!defined $value || $token->eq($value))) {
             $pst->finish_parse_frame;
             return [$token];
         }
-
-        my $msg = "Unable to parse [$token]";
-        $pst->parse_frame_error($msg);
-        undef;
+        else {
+            $pst->parse_frame_error($tracer->($token));
+            return undef;
+        }
     };
 }
 
@@ -67,6 +80,7 @@ sub type($) { pair shift, undef }
 sub cat(@) {
     my @p = @_;
     return parser {} unless @p;
+    #return $p[0] if @p == 1;
 
     # Do the given N parsers succeed consecutively?
     parser {
@@ -84,8 +98,6 @@ sub cat(@) {
 # @return JBD::Parser typed coderef.
 sub any(@) {
     my @p = @_;
-
-    # 0 or 1 argument cases:
     return parser {} unless @p;
     return $p[0] if @p == 1;
 
@@ -106,12 +118,12 @@ sub star($) {
     my $p = shift;
 
     my $s; 
-    $s = ($p ^ parser {$s->(@_)}) 
+    $s = ($p ^ parser {$s->(@_)})
        | parser {[token Nothing]};
 
-    # Note that any Nothing type tokens that may
-    # have facilitated a star(*)-like match need to
-    # be removed from $tok, before continuing.
+    # Nothing type tokens that may have 
+    # facilitated a star(*)-like match need 
+    # to be removed, before continuing.
     parser {
         my $tokens = $s->(@_) or return;
         [grep !$_->typeis(Nothing), @$tokens];

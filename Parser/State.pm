@@ -54,12 +54,14 @@ sub finish_parse_frame {
 }
 
 # @param JBD::Parser::State $this
-# @param string $type A matcher sub type.
-sub add_parse_frame_matcher {
-    my ($this, $type) = @_;
-    $this->parse_frame->{matchers} = []
-        if !exists $this->parse_frame->{matchers};
-    push @{$this->parse_frame->{matchers}}, $type;
+# @param string $type A JBD::Parser::Token type.
+# @param mixed [opt] $val Optional token value.
+sub parse_frame_pair_args {
+    my ($this, $type, $val) = @_;
+    $this->parse_frame->{pair_args} = []
+        if !exists $this->parse_frame->{pair_args};
+    push @{$this->parse_frame->{pair_args}},
+         "{$type, " . (defined $val ? $val : 'UNDEF') . '}';
 }
 
 # @param JBD::Parser::State $this
@@ -73,12 +75,10 @@ sub parse_frame_cursor {
 }
 
 # @param JBD::Parser::State $this
-# @param string [opt] $is An error message, or undef.
-# @return mixed The error message, or undef.
+# @param string [opt] $msg An error message, or undef.
 sub parse_frame_error {
-    my ($this, $is) = @_;
-    $this->parse_frame->{error} = $is if defined $is;
-    $this->parse_frame->{error};
+    my ($this, $msg) = @_;
+    $this->parse_frame->{error} = $msg if defined $msg;
 }
 
 # @param JBD::Parser::State $this
@@ -87,16 +87,16 @@ sub error_string {
     my $this = shift;
     my $pf = $this->parse_frame;
     my $e = $pf->{error} || 'ERROR MISSING';
-    my $m = join ', ', @{$pf->{matchers}};
+    my $m = join ', ', @{$pf->{pair_args}};
     my $l = $this->current_lexed_token;
-    "$e: Could not parse `$l` with `$m`";
+    "\nCould not parse `$l` with `$m`\n$e\n\n";
 }
 
 # @param JBD::Parser::State $this
 # @return int 1 if done parsing, or else 0.
 sub done_parsing {
     my $this = shift;
-    $this->parsed_count > $this->lexed_count || 
+    $this->parsed_count >= $this->lexed_count || 
     $this->parse_frame_cursor > $this->lexed_count
     ? 1 : 0;
 }
