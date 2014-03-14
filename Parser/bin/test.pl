@@ -44,7 +44,7 @@ STAR: {
     print "\nTest star():\n";
 
     printer '1 + 2 + -3 + -.42', (
-        $Num ^ star($plus | $Num)
+        $Num ^ star($plus ^ $Num)
         ), [Num, Op];
 
     printer '1 * 1 1 + /', (
