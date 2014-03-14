@@ -30,6 +30,7 @@ sub printer($$$) {
 }
 
 # Named parsers.
+my $Op = type Op;
 my $Num = type Num;
 my $Word = type Word;
 my $Float = type Float;
@@ -38,6 +39,29 @@ my $Unsigned = type Unsigned;
 my $plus = pair Op, '+';
 my $o_paren = pair Op, '(';
 my $c_paren = pair Op, ')';
+
+STAR: {
+    print "\nTest star():\n";
+
+    printer '1 + 2 + -3 + -.42', (
+        $Num ^ star($plus | $Num)
+        ), [Num, Op];
+
+    printer '1 * 1 1 + /', (
+        $Num ^ $Op ^ star ($Num | $Op)
+        ), [Num, Op];
+
+    printer '0', (star $Num), [Num];
+    printer '1', (star $Num), [Num];
+
+    printer '1 2 3 foo bar baz', (
+        star $Num ^ star $Word
+        ), [Word, Num];
+
+    printer '1 -2 foo 23.1 bar', (
+        star($Signed | $Unsigned) ^ star($Word | $Unsigned)
+        ), [Signed, Unsigned, Word];
+}
 
 CAT: {
     print "\nTest cat():\n";
@@ -67,21 +91,6 @@ ANY: {
     printer '1 Word', (
         $Num ^ ($Num | $Word)
         ), [Num, Word];
-}
-
-STAR: {
-    print "\nTest star():\n";
-
-    printer '0', (star $Num), [Num];
-    printer '1', (star $Num), [Num];
-
-    printer '1 2 3 foo bar baz', (
-        star $Num ^ star $Word
-        ), [Word, Num];
-
-    printer '1 -2 foo 23.1 bar', (
-        star($Signed | $Unsigned) ^ star($Word | $Unsigned)
-        ), [Signed, Unsigned, Word];
 }
 
 TRANS: {

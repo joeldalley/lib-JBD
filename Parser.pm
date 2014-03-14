@@ -10,9 +10,8 @@ use overload '""' => sub($)  { ref $_[0] || $_[0] },
              '|'  => sub($$) { any(shift, shift) };
 
 use JBD::Core::stern;
-use JBD::Core::List 'flatmap';
-use JBD::Core::Exporter ':omni';
 use JBD::Parser::Token qw(token Nothing);
+use JBD::Core::Exporter ':omni';
 use Carp 'croak';
 
 # @param codref A code block.
@@ -33,8 +32,7 @@ sub stack_tracer($$) {
         my @trace;
         for (my $i = 0; defined caller($i); $i++) {
             my ($pkg, $line, $sub) = (caller($i))[0, 2, 3];
-            my $tab = $i ? ' ' : "\t ";
-            push @trace, "$tab pair( $args ) called by "
+            push @trace, "  pair( $args ) called by "
                        . "$pkg at line $line";
         }
         join "\n", reverse @trace;
@@ -53,20 +51,17 @@ sub pair($$) {
     parser {
         my $pst = shift;
 
-        my $token = $pst->current_lexed_token;
-        return if !$token || $pst->done_parsing;
-        $pst->begin_parse_frame;
-        $pst->parse_frame_pair_args($type, $value);
+        $pst->begin_parse_frame($type, $value);
+        my $token = $pst->current_lexed_token or return;
  
         if ($token->typeis($type, Nothing) &&
             (!defined $value || $token->eq($value))) {
             $pst->parse_frame_success;
             return [$token];
         }
-        else {
-            $pst->parse_frame_error($tracer->($token));
-            return undef;
-        }
+
+        $pst->parse_frame_error($tracer->($token));
+        undef;
     };
 }
 
@@ -87,7 +82,7 @@ sub cat(@) {
         my @tokens;
         for my $p (@p) {
             my $tokens = $p->($pst) or return;
-            push @tokens, flatmap $tokens;
+            push @tokens, @$tokens;
         }
         \@tokens;
     };
@@ -117,15 +112,11 @@ sub star($) {
     my $p = shift;
 
     my $s; 
-    $s = ($p ^ parser {$s->(@_)})
-       | parser {[token Nothing]};
-
-    # Nothing type tokens that may have 
-    # facilitated a star(*)-like match need 
-    # to be removed, before continuing.
     parser {
-        my $tokens = $s->(@_) or return;
-        [grep !$_->typeis(Nothing), @$tokens];
+        my $pst = shift;
+        $s = ($p ^ parser {$s->(@_)})
+           | parser {[token Nothing]};
+        $s->($pst);
     };
 }
 
