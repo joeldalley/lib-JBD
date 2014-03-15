@@ -10,7 +10,7 @@ use JBD::Core::stern;
 use JBD::Core::Exporter ':omni';
 use JBD::Parser::Token 'token';
 
-configure_object: {
+BEGIN {
     no strict 'refs';
     my %h = (lexed_tokens => 0, 
              lexed_count  => 1,
