@@ -25,7 +25,7 @@ sub stack_tracer($$) {
     my ($type, $val) = @_;
 
     sub {
-        my $tok  = defined $_[0] ? shift : 'MISSING';
+        my $tok  = defined $_[0] ? shift : 'N/A';
         my $pval = defined $val ? $val : 'UNDEF';
         my $args = qq|"$type: $pval" )->( "$tok"|;
 
@@ -74,9 +74,7 @@ sub type($) { pair shift, undef }
 sub cat(@) {
     my @p = @_;
     return parser {} unless @p;
-    return $p[0] if @p == 1;
 
-    # Do the given N parsers succeed consecutively?
     parser {
         my $pst = shift;
         my @tokens;
@@ -93,7 +91,6 @@ sub cat(@) {
 sub any(@) {
     my @p = @_;
     return parser {} unless @p;
-    return $p[0] if @p == 1;
 
     # Does at least 1 of N given parsers succeed?
     parser {
