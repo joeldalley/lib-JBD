@@ -15,12 +15,12 @@ my $mult  = pair Op, '*';
 my $Num   = type Unsigned | type Signed;
 my $match = [Unsigned, Signed, Op];
 
-my $pairs = pairsof(
+my $pairs = pairsof [
     '1 + 24.92 + -3 + -.42' 
         => $Num ^ star($add ^ $Num),
     '5 * -9.0 + -3' 
         => $Num ^ star(($add | $mult) ^ $Num),
-);
+    ];
 
 while (my $pair = $pairs->()) {
     my ($text, $parser) = @$pair;
