@@ -9,8 +9,11 @@ use JBD::Parser::DSL;
 my @hist;
 my @stack;
 
+my @symbols = qw(Signed Unsigned Num Int Float Word Space Op);
+print "LOAD Lexer Symbols: @symbols\n";
+
 my $lextypes; set_lextypes(shift);
-my $parser; set_parser(shift);
+my $parser;   set_parser(shift);
 
 sub set_lextypes {
     my $in = shift;
@@ -19,7 +22,7 @@ sub set_lextypes {
     return if $@ || !@$val;
     my $have_all = 1;
     M: for my $m (@$val) {
-        next M if grep ref $m eq ref $_, std_symbols;
+        next M if grep ref $m eq $_, @symbols;
         $have_all = 0;
         last M;
     }

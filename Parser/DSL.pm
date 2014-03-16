@@ -26,7 +26,6 @@ my @map = (
          parser_state
     |],
     [qw| JBD::Parser::Lexer::Std
-         std_symbols
          Signed Unsigned Num Int Float
          Word Space Op 
     |],

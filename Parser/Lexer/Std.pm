@@ -7,30 +7,24 @@ package JBD::Parser::Lexer::Std;
 
 use JBD::Core::stern;
 use JBD::Core::Exporter ':omni';
-no strict 'refs';
 
-# Map of {Package symbol => pattern-matcher sub}.
-my %map = (
-    Num      => sub { _Num(shift)                  },
-    Unsigned => sub { _num(shift, 'unsigned')      },
-    Signed   => sub { _num(shift, 'signed')        },
-    Float    => sub { _float(shift)                },
-    Int      => sub { shift =~ qr{^([-+]?\d+)}o; $1},
-    Op       => sub { _op(shift)                   },
-    Space    => sub { shift =~ qr{^(\s+)}o;      $1},
-    Word     => sub { shift =~ qr{^(\w+)}io;     $1},
-    );
-my @std_symbols;
+BEGIN { 
+    my %map = (
+        Num      => sub { _Num(shift)                   },
+        Unsigned => sub { _num(shift, 'unsigned')       },
+        Signed   => sub { _num(shift, 'signed')         },
+        Float    => sub { _float(shift)                 },
+        Int      => sub { shift =~ qr{^([-+]?\d+)}o; $1 },
+        Op       => sub { _op(shift)                    },
+        Space    => sub { shift =~ qr{^(\s+)}o;      $1 },
+        Word     => sub { shift =~ qr{^(\w+)}io;     $1 },
+        );
 
-# Transform symbol definitions into package symbols.
-while (my ($sym, $sub) = each %map) {
-    my $typed = sub { bless $sub, $sym };
-    *{__PACKAGE__ . "::$sym"} = sub { bless $sub, $sym };
-    push @std_symbols, bless $sub, $sym;
+    no strict 'refs';
+    while (my ($sym, $sub) = each %map) {
+        *$sym = sub { bless $sub, $sym };
+    }
 }
-
-# @return array All map symbols.
-sub std_symbols() { @std_symbols }
 
 # @param string Input characters.
 # @return Matched operator character, or undef.
