@@ -76,7 +76,8 @@ sub error_string {
     my $this = shift;
     my $err  = $this->parse_frame->{error};
     my $tok  = $this->parse_frame->{token};
-    my $curr = $this->current_lexed_token;
+    my $curr = $this->current_lexed_token 
+            || token 'INPUT MISSING';
     my $cnt  = $this->parsed_count;
     return qq|Parsed $cnt tokens before error. |
          . qq|Could not parse token "$curr" |
