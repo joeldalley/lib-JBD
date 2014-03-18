@@ -33,14 +33,14 @@ print "\n";
 
 sub _test {
     my ($text, $parser, $matchers) = @_;
+    my $copy   = "$text";
     my $lexed  = tokens $text, $matchers;
     my $state  = parser_state [@$lexed, token End_of_Input];
     my $tokens = ($parser ^ type End_of_Input)->($state)
-        or die $state->error_string;
+                 or die $state->error_string;
     my $ans = shift(@$tokens)->value;
-    $ans == eval $text 
-        or die "Unexpected answer `$ans`";
-    print "`$text` --> $ans\n";
+    $ans == eval $copy or die "Unexpected answer `$ans`";
+    print "`$copy` --> $ans\n";
 }
 
 sub _reduce {

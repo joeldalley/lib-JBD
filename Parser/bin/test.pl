@@ -20,12 +20,13 @@ sub statement($$$) {
 # Prints.
 sub printer($$$) {
     my ($text, $parser, $matchers) = @_;
+    my $copy   = "$text";
     my $types  = join ', ', map ref $_, @$matchers;
-    my $lexed  = tokens $text, $matchers;
+    my $lexed  = tokens \$text, $matchers;
     my $state  = parser_state [@$lexed, token End_of_Input];
     my $tokens = ($parser ^ type End_of_Input)->($state)
-        or die $state->error_string;
-    print "\t", statement $text, $types, $tokens;
+                 or die $state->error_string;
+    print "\t", statement $copy, $types, $tokens;
         
 }
 

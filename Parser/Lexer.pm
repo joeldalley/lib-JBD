@@ -15,8 +15,6 @@
 #            Float->('-1.0') --> '-1.0' match len: 4.
 #                ====> Float is chosen.
 #
-# input() - Shorthand for tokens() + JBD::Parser::Input->new.
-
 # @author Joel Dalley
 # @version 2014/Feb/23
 
@@ -27,63 +25,68 @@ use JBD::Core::Exporter ':omni';
 
 use JBD::Parser::Token 'token';
 use Scalar::Util 'reftype';
-use JBD::Parser::Input;
 use Carp 'croak';
 
-# @param scalar $text Unstructured/arbitrary text.
+# @param mixed Either a string (scalar), or reference to one.
+# @return scalarref A reference to the given string.
+sub toref($) {
+    croak 'Missing required text' unless @_;
+    return $_[0] if ref $_[0] eq 'SCALAR';
+    croak 'Not a scalar or scalarref!' if ref $_[0];
+    \$_[0];
+}
+
+# @param scalar/ref $text Unstructured/arbitrary text.
 # @param arrayref $matchers Pattern-matcher subs.
 # @param coderef [opt] $want Token value requirement sub.
 # @return mixed Array of (type, value), or undef.
 sub match($$;$) {
-    my ($text, $matchers) = (shift, shift);
+    my ($text, $matchers) = (toref shift, shift);
     my $want = shift || sub {defined $_[0]};
     for my $m (@$matchers) {
         my ($mtype, $mref) = (ref $m, reftype $m);
 
         croak 'Element valued `' . substr($m, 0, 24) . '`'
-            . " is not a CODE ref; given text `$text`"
+            . " is not a CODE ref; given text `$$text`"
             unless $mtype;
         croak "Element reference typed `$mtype` in matchers"
-            . " array isn't CODE; given text `$text`" 
+            . " array isn't CODE; given text `$$text`" 
             unless $mref eq 'CODE';
 
-        my $v = $m->($text);
+        my $v = $m->($$text);
         return [ref $m, $v] if $want->($v);
     }
     undef;
 }
 
-# @param scalar $text Unstructured/arbitrary text.
+# @param scalar/ref $text Unstructured/arbitrary text.
 # @param arrayref $matchers Pattern-matcher subs.
 # @param coderef [opt] $sift Input token filter, or undef.
 # @return scalar: An arrayref of JBD::Parser::Tokens.
-#         array: ([JBD::Parser::Tokens], length of tokenized text).
+#          array: ([JBD::Parser::Token], tokenized text length).
 sub tokens($$;$) {
-    my $text = shift;
-    my ($matchers, $sift) = @_;
-
-    ref $text and croak 'Input must be scalar (text)';
+    my ($text, $matchers, $sift) = (toref shift, shift, shift);
 
     my (@tok, $matched);
-    while (length $text) {
+    while (length $$text) {
         my @best = ('', '');
-        my $pair = match $text, $matchers, sub { 
+        my $pair = match $text, $matchers, sub {
             my $v = shift;
             return unless defined $v;
             length $v > length $best[0] 
         };
         my $lv = ref $pair && length $pair->[1] || 0;
         ref $pair && do {@best = @$pair; $matched += $lv};
-        my $lt = defined $text && length $text  || 0;
+        my $lt = defined $$text && length $$text  || 0;
 
         if ($lv && $lt > $lv) {
-            $text = substr $text, $lv;
+            $$text = substr $$text, $lv;
         }
         elsif ($lv && $lt == $lv) {
-            $text = undef;
+            $$text = undef;
         }
         elsif (!$lv) {
-            $text = $lt > 1 ? substr $text, 1 : undef;
+            $$text = $lt > 1 ? substr $$text, 1 : undef;
         }
 
         next unless defined $pair->[1] && length $pair->[1];
@@ -92,17 +95,6 @@ sub tokens($$;$) {
 
     @tok = ref $sift ? grep $sift->($_), @tok : @tok;
     wantarray ? (\@tok, $matched) : \@tok;
-}
-
-# @param scalarref $text Unstructured/arbitrary text.
-# @param arrayref $matchers Pattern-matcher subs.
-# @param hashref [opt] $opts Optional k/v pairs.
-# @return JBD::Parser::Input
-sub input($$;$) {
-    my ($text, $matchers, $opts) = @_;
-    my $tokens = tokens $text, $matchers, $opts->{sift};
-    push @$tokens, @{$opts->{tail}} if $opts->{tail};
-    JBD::Parser::Input->new($tokens);
 }
 
 1;
