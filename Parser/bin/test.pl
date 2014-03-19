@@ -20,26 +20,25 @@ sub statement($$$) {
 # Prints.
 sub printer($$$) {
     my ($text, $parser, $matchers) = @_;
-    my $copy   = "$text";
     my $types  = join ', ', map ref $_, @$matchers;
-    my $lexed  = tokens \$text, $matchers;
+    my $lexed  = tokens "$text", $matchers;
     my $state  = parser_state [@$lexed, token End_of_Input];
     my $tokens = ($parser ^ type End_of_Input)->($state)
                  or die $state->error_string;
-    print "\t", statement $copy, $types, $tokens;
+    print "\t", statement $text, $types, $tokens;
         
 }
 
 # Named parsers.
-my $Op = type Op;
-my $Num = type Num;
-my $Word = type Word;
-my $Float = type Float;
-my $Signed = type Signed;
+my $Op       = type Op;
+my $Num      = type Num;
+my $Word     = type Word;
+my $Float    = type Float;
+my $Signed   = type Signed;
 my $Unsigned = type Unsigned;
-my $plus = pair Op, '+';
-my $o_paren = pair Op, '(';
-my $c_paren = pair Op, ')';
+my $plus     = pair Op, '+';
+my $o_paren  = pair Op, '(';
+my $c_paren  = pair Op, ')';
 
 STAR: {
     print "\nTest star():\n";
