@@ -6,16 +6,21 @@
 package JBD::JSON::Grammar;
 
 use constant export_matchers => qw(
-    JsonStringChars
-    JsonEscape
+    Quote
+    UnicodeEscapeSeq
+    JsonEscapeChar
+    JsonEscapeSeq
+    JsonStringChar
     );
 use constant export_parsers => qw(
     json_member_list
     json_element_list
-    json_string_chars
-    json_esc_sequence
     json_bool_literal
     json_null_literal
+    json_escape_char
+    json_escape_seq
+    json_string_char
+    star_string_chars
     json_member
     json_object
     json_string
@@ -32,28 +37,63 @@ use JBD::Core::Exporter;
 #///////////////////////////////////////////////////////////////
 # Local matchers. //////////////////////////////////////////////
 
-sub JsonEscape { 
-    my $r = qr/(\R|[[:xdigit:]]{4})/o;
-    bless sub {shift =~ $r; $1}, 'JsonEscape';
+sub UnicodeEscapeSeq {
+    bless sub {
+        my $chars = shift;
+        $chars =~ qr/^[[:xdigit:]]{4}/o;
+        return if !defined $1
+               || hex "0x$1" < 0 
+               || hex "0x$1" > 0x001F; $1;
+    }, 'UnicodeEscapeSeq';
 }
 
-sub JsonStringChars {
+sub JsonEscapeChar { 
+    bless sub {
+        my $chars = shift;
+        return unless length $chars;
+        $chars =~ /^(\R)/o; $1;
+    }, 'JsonEscapeChar';
+}
+
+sub JsonEscapeSeq {
+    bless sub {
+        my $chars = shift;
+        JsonEscapeChar->($chars) || UnicodeEscapeSeq->($chars);
+    }, 'JsonEscapeSeq';
+}
+
+sub OpNoBackslash {
+    bless sub {
+        my $chars = shift;
+        my $op = Op->($chars);
+        $op && $op ne '\\' ? $op : undef;
+    }, 'OpNoBackslash';
+}
+
+sub Quote { 
+    bless sub {
+        my $chars = shift;
+        my $op = Op->($chars);
+        return $op && $op eq '"' ? $op : undef;
+    }, 'Quote';
+}
+
+sub JsonStringChar {
     bless sub {
         my $chars = shift;
         return unless defined $chars;
-        return if grep substr($chars, 0, 1) eq $_, ('"', '\\');
-        return if $chars =~ /^[[:xdigit:]]{4}$/o
-               && (hex "0x$1" >= 0 || hex "0x$1" <= 0x001F);
-        Word->($chars) || Op->($chars);
-    }, 'JsonStringChars';
+        return if substr($chars, 0, 1) eq '"';
+        Word->($chars) 
+        || OpNoBackslash->($chars);
+    }, 'JsonStringChar';
 }
 
 
 #///////////////////////////////////////////////////////////////
 # Local names. /////////////////////////////////////////////////
 
-sub quote()  { pair Op, '"' }
-sub str($)   { pair JsonStringChars, shift }
+sub quote()  { type Quote }
+sub str($)   { pair JsonStringChar, shift }
 sub colon()  { str ':' }
 sub comma()  { str ',' }
 sub lbrace() { str '{' }
@@ -73,11 +113,14 @@ sub json_bool_literal() { str 'true' | str 'false' }
 sub json_null_literal() { str 'null' }
 sub json_whitespace()   { type Space }
 sub json_number()       { type Num }
-sub json_esc()          { type JsonEscape }
-sub json_esc_sequence() { star json_esc }
 
-sub json_string_chars() { type JsonStringChars }
-sub star_string_chars() { star json_string_chars }
+sub json_escape_char    { type JsonEscapeChar }
+sub json_escape_seq     { type JsonEscapeSeq }
+sub json_string_char()  { type JsonStringChar }
+sub star_string_chars() {
+    star(json_string_char) 
+    ^ star(json_escape_char | json_escape_seq | json_string_char);
+}
 sub json_string()       { quote ^ star_string_chars ^ quote }
 
 sub star_comma_value()  { star(comma ^ json_value) }
