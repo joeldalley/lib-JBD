@@ -45,7 +45,7 @@ for my $entry (@cfg) {
     my $state  = get_state "$text";
 
     my $pairs = pairsof 
-                    # Uncomment LEXED , to help debugging.
+                    # Uncomment LEXED, to help debugging.
                     # LEXED  => sub { $state->lexed_tokens },
                     PARSED => sub {
                          no strict 'refs';
