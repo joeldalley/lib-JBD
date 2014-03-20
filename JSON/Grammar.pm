@@ -17,7 +17,7 @@ use constant export_parsers => qw(
     json_member json_object json_string
     json_array json_value json_text
     );
-our @EXPORT = (export_matchers, export_parsers);
+our @EXPORT = ('init', export_matchers, export_parsers);
 
 use JBD::Parser::DSL;
 use JBD::Core::Exporter;
@@ -127,11 +127,21 @@ sub json_object()       { lbrace ^ star_member_list ^ rbrace }
 
 sub json_text()         { json_value }
 
-$JV = json_null_literal
-    | json_bool_literal
-    | json_number
-    | json_string
-    | json_array
-    | json_object;
+sub init(%) {
+    my %trans = @_;
+
+    my $def = sub {
+        no strict 'refs';
+        my $sub = shift;
+        $trans{$sub} ? trans &$sub, $trans{$sub} : &$sub;
+    };
+
+    $JV = $def->('json_null_literal')
+        | $def->('json_bool_literal')
+        | $def->('json_number')
+        | $def->('json_string')
+        | $def->('json_array')
+        | $def->('json_object');
+}
 
 1;

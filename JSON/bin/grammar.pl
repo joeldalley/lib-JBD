@@ -1,11 +1,25 @@
 
 use JBD::Parser::DSL;
-use JBD::JSON::Grammar;
 use JBD::Core::List 'pairsof';
+
+use JBD::JSON::Grammar; 
+
+init json_string => \&remove_Nothing,
+     json_array  => \&remove_Nothing,
+     json_object => \&remove_Nothing;
+
+sub remove_Nothing($) { 
+    [grep !$_->typeis(Nothing), @{$_[0]}];
+}
 
 sub get_state($) {
     my $text = shift;
-    my @types  = (Num, Quote, JsonEscapeSeq, JsonEscapeChar, JsonStringChar);
+    my @types  = (
+        Num, Quote,
+        JsonEscapeSeq, 
+        JsonEscapeChar, 
+        JsonStringChar
+        );
     my $tokens = tokens \$text, \@types;
     my $state  = parser_state $tokens;
 }
@@ -16,13 +30,14 @@ my @cfg = (
     ['json_bool_literal', 'false'],
     ['json_string_char',  'chars'],
     ['star_string_chars',  "String chars?\n"],
-    ['json_string',       qq|"This. Is\na string?"|],
+    ['json_string',       qq|"This. Is\na string?\r\f"|],
     ['json_member_list',  '"nada":null'],
     ['json_value',        '1'],
     ['json_element_list', '1, 2'],
     ['json_array',        '[1, 2]'],
     ['json_member_list',  '"one" : 1, "two": [1, 2]'],
-    ['json_object',       '{ "one": {"one_A": 1} , "two": 2.0, "tre": 3.0E0 }'],
+    ['json_object',       '{ "one": {"one_A": 1} , ' .
+                          '  "two": 2.0, "tre": 3.0E0 }'],
     );
 
 for my $entry (@cfg) {
@@ -34,8 +49,9 @@ for my $entry (@cfg) {
                     # LEXED  => sub { $state->lexed_tokens },
                     PARSED => sub {
                          no strict 'refs';
-                         &$parser->($state) 
-                         or die $state->error_string;
+                         my $parsed = &$parser->($state) 
+                             or die $state->error_string;
+                         remove_Nothing $parsed;
                     };
     
     while (my $pair = $pairs->()) {
