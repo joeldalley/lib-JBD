@@ -6,27 +6,16 @@
 package JBD::JSON::Grammar;
 
 use constant export_matchers => qw(
-    Quote
-    UnicodeEscapeSeq
-    JsonEscapeChar
-    JsonEscapeSeq
-    JsonStringChar
+    Quote UnicodeEscapeSeq JsonEscapeChar
+    JsonEscapeSeq JsonStringChar
     );
 use constant export_parsers => qw(
-    json_member_list
-    json_element_list
-    json_bool_literal
-    json_null_literal
-    json_escape_char
-    json_escape_seq
-    json_string_char
-    star_string_chars
-    json_member
-    json_object
-    json_string
-    json_array
-    json_value
-    json_text
+    json_member_list json_element_list
+    json_bool_literal json_null_literal
+    json_escape_char json_escape_seq
+    json_string_char star_string_chars
+    json_member json_object json_string
+    json_array json_value json_text
     );
 our @EXPORT = (export_matchers, export_parsers);
 
@@ -119,9 +108,11 @@ sub json_escape_seq     { type JsonEscapeSeq }
 sub json_string_char()  { type JsonStringChar }
 sub star_string_chars() {
     star(json_string_char) 
-    ^ star(json_escape_char | json_escape_seq | json_string_char);
+    ^ star(json_string_char 
+         | json_escape_seq 
+         | json_escape_char)
 }
-sub json_string()       { quote ^ star_string_chars ^ quote }
+sub json_string() { quote ^ star_string_chars ^ quote }
 
 sub star_comma_value()  { star(comma ^ json_value) }
 sub json_element_list() { json_value ^ star_comma_value }
