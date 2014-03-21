@@ -6,8 +6,10 @@
 package JBD::JSON::Grammar;
 
 use constant export_matchers => qw(
-    Quote UnicodeEscapeSeq JsonEscapeChar
-    JsonEscapeSeq JsonStringChar
+    JsonQuote JsonColon JsonComma
+    JsonCurlyBrace JsonSquareBracket
+    JsonEscapeSeq UnicodeEscapeSeq 
+    JsonEscapeChar JsonStringChar
     );
 use constant export_parsers => qw(
     json_member_list json_element_list
@@ -51,20 +53,52 @@ sub JsonEscapeSeq {
     }, 'JsonEscapeSeq';
 }
 
-sub OpNoBackslash {
+sub JsonOp {
     bless sub {
         my $chars = shift;
         my $op = Op->($chars);
-        $op && $op ne '\\' ? $op : undef;
-    }, 'OpNoBackslash';
+        $op && $op ne '\\' && $op ne '"' ? $op : undef;
+    }, 'JsonOp';
 }
 
-sub Quote { 
+sub JsonQuote { 
     bless sub {
         my $chars = shift;
         my $op = Op->($chars);
-        return $op && $op eq '"' ? $op : undef;
-    }, 'Quote';
+        $op && $op eq '"' ? $op : undef;
+    }, 'JsonQuote';
+}
+
+sub JsonColon {
+    bless sub {
+        my $chars = shift;
+        my $op = Op->($chars);
+        $op && $op eq ':' ? $op : undef;
+    }, 'JsonColon';
+}
+
+sub JsonComma {
+    bless sub {
+        my $chars = shift;
+        my $op = Op->($chars);
+        $op && $op eq ',' ? $op : undef;
+    }, 'JsonComma';
+}
+
+sub JsonCurlyBrace {
+    bless sub {
+        my $chars = shift;
+        my $op = Op->($chars);
+        $op && ($op eq '{' || $op eq '}') ? $op : undef;
+    }, 'JsonCurlyBrace';
+}
+
+sub JsonSquareBracket {
+    bless sub {
+        my $chars = shift;
+        my $op = Op->($chars);
+        $op && ($op eq '[' || $op eq ']') ? $op : undef;
+    }, 'JsonSquareBracket';
 }
 
 sub JsonStringChar {
@@ -72,8 +106,7 @@ sub JsonStringChar {
         my $chars = shift;
         return unless defined $chars;
         return if substr($chars, 0, 1) eq '"';
-        Word->($chars) 
-        || OpNoBackslash->($chars);
+        Word->($chars) || JsonOp->($chars);
     }, 'JsonStringChar';
 }
 
@@ -81,14 +114,14 @@ sub JsonStringChar {
 #///////////////////////////////////////////////////////////////
 # Local names. /////////////////////////////////////////////////
 
-sub quote()  { type Quote }
+sub quote()  { type JsonQuote }
 sub str($)   { pair JsonStringChar, shift }
-sub colon()  { str ':' }
-sub comma()  { str ',' }
-sub lbrace() { str '{' }
-sub rbrace() { str '}' }
-sub lbrack() { str '[' }
-sub rbrack() { str ']' }
+sub colon()  { pair JsonColon, ':' }
+sub comma()  { pair JsonComma, ',' }
+sub lbrace() { pair JsonCurlyBrace, '{' }
+sub rbrace() { pair JsonCurlyBrace, '}' }
+sub lbrack() { pair JsonSquareBracket, '[' }
+sub rbrack() { pair JsonSquareBracket, ']' }
 
 
 #///////////////////////////////////////////////////////////////
