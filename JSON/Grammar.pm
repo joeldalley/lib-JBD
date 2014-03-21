@@ -8,8 +8,9 @@ package JBD::JSON::Grammar;
 use constant export_matchers => qw(
     JsonQuote JsonColon JsonComma
     JsonCurlyBrace JsonSquareBracket
-    JsonEscapeSeq UnicodeEscapeSeq 
-    JsonEscapeChar JsonStringChar
+    JsonNum JsonNull JsonBool 
+    JsonStringChar JsonEscapeSeq 
+    UnicodeEscapeSeq JsonEscapeChar 
     );
 use constant export_parsers => qw(
     json_member_list json_element_list
@@ -101,6 +102,24 @@ sub JsonSquareBracket {
     }, 'JsonSquareBracket';
 }
 
+sub JsonNum { bless sub { Num->(@_) }, 'JsonNum' }
+
+sub JsonBool {
+    bless sub {
+        my $chars = shift;
+        return unless defined $chars;
+        $chars =~ /^(true|false)/o; $1;
+    }, 'JsonBool';
+}
+
+sub JsonNull {
+    bless sub {
+        my $chars = shift;
+        return unless defined $chars;
+        index($chars, 'null') == 0 ? 'null' : undef;
+    }, 'JsonNull';
+}
+
 sub JsonStringChar {
     bless sub {
         my $chars = shift;
@@ -122,6 +141,9 @@ sub lbrace() { pair JsonCurlyBrace, '{' }
 sub rbrace() { pair JsonCurlyBrace, '}' }
 sub lbrack() { pair JsonSquareBracket, '[' }
 sub rbrack() { pair JsonSquareBracket, ']' }
+sub true()   { pair JsonBool, 'true' }
+sub false()  { pair JsonBool, 'false' }
+sub null()   { pair JsonNull, 'null' }
 
 
 #///////////////////////////////////////////////////////////////
@@ -131,10 +153,8 @@ my $JV;
 my $json_value = parser {$JV->(@_)};
 sub json_value() { $json_value }
 
-sub json_bool_literal() { str 'true' | str 'false' }
-sub json_null_literal() { str 'null' }
-sub json_whitespace()   { type Space }
-sub json_number()       { type Num }
+sub json_bool_literal() { true | false }
+sub json_null_literal() { null }
 
 sub json_escape_char    { type JsonEscapeChar }
 sub json_escape_seq     { type JsonEscapeSeq }
@@ -158,6 +178,7 @@ sub json_member_list()  { json_member ^ star_comma_member }
 sub star_member_list()  { star json_member_list }
 sub json_object()       { lbrace ^ star_member_list ^ rbrace }
 
+sub json_number()       { type JsonNum }
 sub json_text()         { json_value }
 
 sub init(%) {

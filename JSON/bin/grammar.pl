@@ -15,7 +15,7 @@ sub remove_Nothing($) {
 sub get_state($) {
     my $text = shift;
     my @types  = (
-        Num, 
+        JsonNum, 
         JsonQuote,
         JsonComma,
         JsonColon,
@@ -23,6 +23,8 @@ sub get_state($) {
         JsonSquareBracket,
         JsonEscapeSeq,
         JsonEscapeChar, 
+        JsonBool,
+        JsonNull,
         JsonStringChar,
         );
     my $tokens = tokens \$text, \@types;
@@ -34,15 +36,14 @@ my @cfg = (
     ['json_bool_literal', 'true'],
     ['json_bool_literal', 'false'],
     ['json_string_char',  'chars'],
-    ['star_string_chars',  "String chars?\n"],
+    ['star_string_chars', "String chars?\n"],
     ['json_string',       qq|"This. Is\na string?\r\f"|],
     ['json_member_list',  '"nada":null'],
-    ['json_value',        '1'],
-    ['json_element_list', '1, 2'],
+    ['json_element_list', 'true, false, null, 1, 2'],
     ['json_array',        '[1, 2]'],
     ['json_member_list',  '"one" : 1, "two": [1, 2]'],
-    ['json_object',       '{ "one": {"one_A": 1} , ' .
-                          '  "two": 2.0, "tre": 3.0E0 }'],
+    ['json_object',       '{ "one": {"one_A": true} , ' .
+                          '  "two": 2.0, "tre": 3.0E0 }'], 
     );
 
 for my $entry (@cfg) {
