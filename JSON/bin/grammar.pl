@@ -15,10 +15,15 @@ sub remove_Nothing($) {
 sub get_state($) {
     my $text = shift;
     my @types  = (
-        Num, Quote,
-        JsonEscapeSeq, 
+        Num, 
+        JsonQuote,
+        JsonComma,
+        JsonColon,
+        JsonCurlyBrace,
+        JsonSquareBracket,
+        JsonEscapeSeq,
         JsonEscapeChar, 
-        JsonStringChar
+        JsonStringChar,
         );
     my $tokens = tokens \$text, \@types;
     my $state  = parser_state $tokens;
@@ -45,8 +50,7 @@ for my $entry (@cfg) {
     my $state  = get_state "$text";
 
     my $pairs = pairsof 
-                    # Uncomment LEXED, to help debugging.
-                    # LEXED  => sub { $state->lexed_tokens },
+                    #LEXED  => sub { $state->lexed_tokens },
                     PARSED => sub {
                          no strict 'refs';
                          my $parsed = &$parser->($state) 
