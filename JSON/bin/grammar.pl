@@ -1,35 +1,15 @@
 
+# Basic grammar driver.
+# @author Joel Dalley
+# @version 2014/Mar/21
+
 use JBD::Parser::DSL;
 use JBD::Core::List 'pairsof';
-
 use JBD::JSON::Grammar; 
 
 init json_string => \&remove_Nothing,
      json_array  => \&remove_Nothing,
      json_object => \&remove_Nothing;
-
-sub remove_Nothing($) { 
-    [grep !$_->typeis(Nothing), @{$_[0]}];
-}
-
-sub get_state($) {
-    my $text = shift;
-    my @types  = (
-        JsonNum, 
-        JsonQuote,
-        JsonComma,
-        JsonColon,
-        JsonCurlyBrace,
-        JsonSquareBracket,
-        JsonEscapeSeq,
-        JsonEscapeChar, 
-        JsonBool,
-        JsonNull,
-        JsonStringChar,
-        );
-    my $tokens = tokens \$text, \@types;
-    my $state  = parser_state $tokens;
-}
 
 my @cfg = (
     ['json_null_literal', 'null'],
@@ -48,32 +28,68 @@ my @cfg = (
 
 for my $entry (@cfg) {
     my ($parser, $text) = @$entry;
-    my $state  = get_state "$text";
+    my $state = get_state("$text");
 
+    # Optionally show lexed tokens as 
+    # well, which helps in debugging.
     my $pairs = pairsof 
-                    #LEXED  => sub { $state->lexed_tokens },
-                    PARSED => sub {
-                         no strict 'refs';
-                         my $parsed = &$parser->($state) 
-                             or die $state->error_string;
-                         remove_Nothing $parsed;
-                    };
+        #LEXED  => sub { $state->lexed_tokens },
+        PARSED => sub {
+             no strict 'refs';
+             my $parsed = &$parser->($state) 
+                 or die $state->error_string;
+             remove_Nothing($parsed);
+        };
     
     while (my $pair = $pairs->()) {
         my ($label, $code) = @$pair;
 
-        my @printable = map {
-            my ($t, $v) = ($_->type, $_->value);
-            printable_representation_of_whitespace: {
-                my $r = qr/^(JsonEscapeChar|JsonEscapeSeq)$/o;
-                $v = "#[\\$1]" if $t =~ $r;
-            }
-            $v = defined $v ? $v : 'UNDEF';
-            "\n\t$t<$v>";
-        } @{$code->()};
+        my $report = '';
+        for (@{$code->()}) {
+            my ($t, $v) = _type_and_value($_);
+            $report .= "\n\t" . "$t<$v>";
+        }
 
-        print "[$label] $parser->($text)", 
-              join('', @printable), "\n\n";
+        print "[$label] $parser->($text) $report\n\n";
     }
 
+}
+
+
+#####
+exit;
+#####
+
+
+# @param arrayref Array of JBD::Parser::Tokens.
+# @return arrayref Same array, minus Nothing-type tokens.
+sub remove_Nothing { 
+    [grep !$_->typeis(Nothing), @{$_[0]}];
+}
+
+# @param string $text Input text.
+# @return JBD::Parser::State
+sub get_state {
+    my $text = shift;
+    my @types  = (
+        JsonNum,       JsonQuote,      JsonComma, 
+        JsonColon,     JsonCurlyBrace, JsonSquareBracket,
+        JsonEscapeSeq, JsonEscapeChar, JsonBool, 
+        JsonNull,      JsonStringChar,
+        );
+    parser_state tokens \$text, \@types;
+}
+
+# @param JBD::Parser::Token A token.
+# @return array Array of (type, value).
+sub _type_and_value {
+    my $t = $_[0]->type;
+    my $v = defined $_[0]->value ? $_[0]->value : 'UNDEF';
+
+    FORMAT_WHITESPACE: {
+        my $r = qr/^(JsonEscape\w+)$/o;
+        $v = "#[\\$1]" if $t =~ $r;
+    }
+
+    ($t, $v);
 }
