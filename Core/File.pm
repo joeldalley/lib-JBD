@@ -22,9 +22,10 @@ sub read($;$) {
     my ($file, $size) = (shift, shift || 1024);
 
     my ($data, $buff);
-    open F, '<', $file or die "$file -- $!";
-    while (read F, $buff, $size) { $data .= $buff }
-    close F;
+    open my $F, '<', $file or die "$file -- $!";
+    binmode $F, ':utf8' or die "$file -- $!";
+    while (read $F, $buff, $size) { $data .= $buff }
+    close $F;
     $data;
 }
 
@@ -32,9 +33,10 @@ sub read($;$) {
 #/ @param mixed $data    file data
 sub write($$) {
     my ($file, $data) = @_;
-    open F, '>', $file or die "$file -- $!";
-    print F $data;
-    close F;
+    open my $F, '>', $file or die "$file -- $!";
+    binmode $F, ':utf8' or die "$file -- $!";
+    print $F $data;
+    close $F;
 }
 
 1;

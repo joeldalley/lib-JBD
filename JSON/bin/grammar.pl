@@ -1,17 +1,21 @@
+binmode STDOUT, ':utf8';
 
 # Basic grammar driver.
 # @author Joel Dalley
 # @version 2014/Mar/21
 
-use JBD::Parser::DSL;
 use JBD::Core::List 'pairsof';
+use JBD::Core::File 'read';
+use JBD::Parser::DSL;
 use JBD::JSON::Grammar; 
 
 init json_string => \&remove_Nothing,
      json_array  => \&remove_Nothing,
      json_object => \&remove_Nothing;
 
+# Inline tests.
 my @cfg = (
+    ['json_escape_seq',   '\\"'],
     ['json_null_literal', 'null'],
     ['json_bool_literal', 'true'],
     ['json_bool_literal', 'false'],
@@ -25,6 +29,10 @@ my @cfg = (
     ['json_object',       '{ "one": {"one_A": true} , ' .
                           '  "two": 2.0, "tre": 3.0E0 }'], 
     );
+
+# Corpus tests.
+push @cfg, ['json_object', $_], for corpus_texts();
+
 
 for my $entry (@cfg) {
     my ($parser, $text) = @$entry;
@@ -42,10 +50,10 @@ for my $entry (@cfg) {
         };
     
     while (my $pair = $pairs->()) {
-        my ($label, $code) = @$pair;
+        my ($label, $code, $n) = (@$pair, 0);
         print "$label $parser->($text)";
         for my $token (@{$code->()}) {
-            print "\n\t", to_str($token)
+            print "\n\t[", ++$n, '] ', to_str($token)
         }
         print "\n\n";
     }
@@ -54,6 +62,16 @@ for my $entry (@cfg) {
 #####
 exit;
 #####
+
+# @return array Array of strings to JSON corpus texts.
+sub corpus_texts { 
+    map {
+        $_ = read($_); 
+        $_ =~ s{\R}{}g; 
+        $_ =~ s{\s}{}g;
+        $_
+    } glob 'json_corpus/*.json';
+}
 
 # @param arrayref Array of JBD::Parser::Tokens.
 # @return arrayref Same array, minus Nothing-type tokens.

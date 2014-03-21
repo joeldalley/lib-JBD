@@ -30,7 +30,7 @@ BEGIN {
 # @return Matched operator character, or undef.
 sub _op($) {
     my $chars = shift;
-    my $alphabet = '\'"{}[]()<>+*-/%=^|&~`,.:;#@!?';
+    my $alphabet = '\\\'"{}[]()<>+*-/%=^|&~`,.:;#@!?';
     return unless length $chars;
     my $i = index $alphabet, substr $chars, 0, 1;
     $i >= 0 ? substr $alphabet, $i, 1 : undef;

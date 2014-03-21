@@ -43,7 +43,14 @@ sub JsonEscapeChar {
     bless sub {
         my $chars = shift;
         return unless length $chars;
-        $chars =~ /^(\R)/o; $1;
+
+        $chars =~ /^(\R)/o; 
+        return $1 if defined $1;
+
+        (Op->($chars) || '') eq '\\' && do {
+            $chars =~ /^(\\)("|\\|b|f|n|r|t)/o;
+            return "$1$2" if defined $1 && defined $2;
+        };
     }, 'JsonEscapeChar';
 }
 
@@ -134,7 +141,6 @@ sub JsonStringChar {
 # Local names. /////////////////////////////////////////////////
 
 sub quote()  { type JsonQuote }
-sub str($)   { pair JsonStringChar, shift }
 sub colon()  { pair JsonColon, ':' }
 sub comma()  { pair JsonComma, ',' }
 sub lbrace() { pair JsonCurlyBrace, '{' }
@@ -153,6 +159,7 @@ my $JV;
 my $json_value = parser {$JV->(@_)};
 sub json_value() { $json_value }
 
+sub json_number()       { type JsonNum }
 sub json_bool_literal() { true | false }
 sub json_null_literal() { null }
 
@@ -160,8 +167,22 @@ sub json_escape_char    { type JsonEscapeChar }
 sub json_escape_seq     { type JsonEscapeSeq }
 sub json_string_char()  { type JsonStringChar }
 sub star_string_chars() {
-    star(json_string_char) 
-    ^ star(json_string_char 
+    star(colon 
+       | comma 
+       | type(JsonCurlyBrace) 
+       | type(JsonSquareBracket)
+       | type(JsonBool)
+       | type(JsonNull)
+       | json_number
+       | json_string_char) 
+    ^ star(colon 
+         | comma
+         | type(JsonCurlyBrace) 
+         | type(JsonSquareBracket)
+         | type(JsonBool)
+         | type(JsonNull)
+         | json_number
+         | json_string_char 
          | json_escape_seq 
          | json_escape_char)
 }
@@ -178,7 +199,6 @@ sub json_member_list()  { json_member ^ star_comma_member }
 sub star_member_list()  { star json_member_list }
 sub json_object()       { lbrace ^ star_member_list ^ rbrace }
 
-sub json_number()       { type JsonNum }
 sub json_text()         { json_value }
 
 sub init(%) {
