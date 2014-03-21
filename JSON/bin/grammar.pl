@@ -43,46 +43,36 @@ for my $entry (@cfg) {
     
     while (my $pair = $pairs->()) {
         my ($label, $code) = @$pair;
-
-        my $report = '';
-        for (@{$code->()}) {
-            my ($t, $v) = _type_and_value($_);
-            $report .= "\n\t" . "$t<$v>";
+        print "$label $parser->($text)";
+        for my $token (@{$code->()}) {
+            print "\n\t", to_str($token)
         }
-
-        print "[$label] $parser->($text) $report\n\n";
+        print "\n\n";
     }
-
 }
-
 
 #####
 exit;
 #####
 
-
 # @param arrayref Array of JBD::Parser::Tokens.
 # @return arrayref Same array, minus Nothing-type tokens.
-sub remove_Nothing { 
-    [grep !$_->typeis(Nothing), @{$_[0]}];
-}
+sub remove_Nothing { [grep !$_->typeis(Nothing), @{$_[0]}] }
 
-# @param string $text Input text.
+# @param string Input text.
 # @return JBD::Parser::State
 sub get_state {
-    my $text = shift;
-    my @types  = (
+    parser_state tokens \+shift, [
         JsonNum,       JsonQuote,      JsonComma, 
         JsonColon,     JsonCurlyBrace, JsonSquareBracket,
         JsonEscapeSeq, JsonEscapeChar, JsonBool, 
         JsonNull,      JsonStringChar,
-        );
-    parser_state tokens \$text, \@types;
+    ];
 }
 
 # @param JBD::Parser::Token A token.
-# @return array Array of (type, value).
-sub _type_and_value {
+# @return string Token representation, for printing.
+sub to_str {
     my $t = $_[0]->type;
     my $v = defined $_[0]->value ? $_[0]->value : 'UNDEF';
 
@@ -91,5 +81,5 @@ sub _type_and_value {
         $v = "#[\\$1]" if $t =~ $r;
     }
 
-    ($t, $v);
+    "$t<$v>";
 }
