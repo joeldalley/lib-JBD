@@ -12,7 +12,7 @@ use JBD::JSON::Lexers;
 # @param arrayref Array of JBD::Parser::Tokens.
 # @return arrayref Same array, minus Nothing-type tokens.
 sub remove_novalue { 
-    [grep !$_->typeis(Nothing, JsonEscapeSeq), @{$_[0]}];
+    [grep !$_->typeis(Nothing), @{$_[0]}];
 }
 
 # @param arrayref Array of JBD::Parser::Tokens.

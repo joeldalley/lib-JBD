@@ -9,7 +9,7 @@ use JBD::Core::Exporter;
 use JBD::Parser::DSL;
 
 our @EXPORT = qw(
-    JsonNum JsonNull JsonBool 
+    JsonSpace JsonNum JsonNull JsonBool 
     JsonSquareBracket JsonCurlyBrace 
     JsonColon JsonComma JsonQuote JsonStringChar 
     JsonEscapeSeq UnicodeEscapeSeq JsonEscapeChar 
@@ -95,6 +95,8 @@ sub JsonSquareBracket {
         $op && ($op eq '[' || $op eq ']') ? $op : undef;
     }, 'JsonSquareBracket';
 }
+
+sub JsonSpace { bless sub { Space->(@_) }, 'JsonSpace' }
 
 sub JsonNum { bless sub { Num->(@_) }, 'JsonNum' }
 

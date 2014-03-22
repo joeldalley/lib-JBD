@@ -11,7 +11,8 @@ use JBD::JSON::Transformers 'reduce_JsonString';
 use JBD::JSON::Lexers;
 use JBD::Parser::DSL;
 
-our @EXPORT = qw(init
+our @EXPORT = qw(
+    init json_space
     json_member_list json_element_list
     json_bool_literal json_null_literal
     json_escape_char json_escape_seq
@@ -47,9 +48,13 @@ sub json_number()       { type JsonNum }
 sub json_bool_literal() { true | false }
 sub json_null_literal() { null }
 
+sub json_space()       { type JsonSpace }
 sub json_escape_char() { type JsonEscapeChar }
 sub json_escape_seq()  { type JsonEscapeSeq }
-sub star_escape_seq()  { star json_escape_seq }
+sub star_whitespace() { 
+  star(json_escape_seq) ^ star(json_space);
+}
+
 sub json_string_char() { 
        colon 
        | comma 
@@ -59,6 +64,7 @@ sub json_string_char() {
        | type(JsonNull)
        | json_number
        | type(JsonStringChar)
+       | type(JsonSpace)
        | json_escape_seq;
 }
 sub star_string_char() { star json_string_char }
@@ -71,25 +77,25 @@ sub star_comma_value()  { star(comma ^ json_value) }
 sub json_element_list() { json_value ^ star_comma_value }
 sub star_element_list() { star json_element_list }
 sub json_array() { 
-      star_escape_seq ^ lbrack 
-    ^ star_escape_seq ^ star_element_list 
-    ^ star_escape_seq ^ rbrack
-    ^ star_escape_seq;
+      star_whitespace ^ lbrack 
+    ^ star_whitespace ^ star_element_list 
+    ^ star_whitespace ^ rbrack
+    ^ star_whitespace;
 }
 
 sub json_member() { 
-      star_escape_seq ^ json_string 
-    ^ star_escape_seq ^ colon 
-    ^ star_escape_seq ^ json_value 
-    ^ star_escape_seq;
+      star_whitespace ^ json_string 
+    ^ star_whitespace ^ colon 
+    ^ star_whitespace ^ json_value 
+    ^ star_whitespace;
 }
 sub star_comma_member() { star(comma ^ json_member) }
 sub json_member_list()  { json_member ^ star_comma_member }
 sub star_member_list()  { star json_member_list }
 sub json_object() { 
-      star_escape_seq ^ lbrace
-    ^ star_escape_seq ^ star_member_list
-    ^ star_escape_seq ^ rbrace;
+      star_whitespace ^ lbrace
+    ^ star_whitespace ^ star_member_list
+    ^ star_whitespace ^ rbrace;
 }
 
 sub json_text() { json_value }
@@ -107,14 +113,14 @@ sub init(%) {
         $trans{$sub} ? trans &$sub, $trans{$sub} : &$sub;
     };
 
-    $JV = star(json_escape_seq)
+    $JV = star_whitespace
         ^ ($def->('json_null_literal') |
            $def->('json_bool_literal') |
            $def->('json_number')       |
            $def->('json_string')       |
            $def->('json_array')        |
            $def->('json_object'))
-        ^ star(json_escape_seq);
+        ^ star_whitespace;
 }
 
 1;

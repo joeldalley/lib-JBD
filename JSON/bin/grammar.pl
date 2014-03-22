@@ -15,6 +15,7 @@ my $file = shift;
 
 # Inline tests.
 my @cfg = $file ? () : (
+    [json_space        => ' '],
     [json_escape_seq   => '\\"'],
     [json_null_literal => 'null'],
     [json_bool_literal => 'true'],
@@ -38,11 +39,11 @@ binmode STDOUT, ':utf8';
 for (@cfg) {
     my ($sym, $text) = @$_;
     my $parsed = std_parse $sym, "$text";
-    print "$sym->($text)";
+    print "$sym->($text) <<<";
     for (my $n = 0; $n < @$parsed; $n++) {
         print "\n\t[$n] ", to_str($parsed->[$n]);
     }
-    print "\n\n";
+    print "\n>>>\n";
 }
 
 
@@ -63,7 +64,7 @@ sub to_str {
     my $v = defined $_[0]->value ? $_[0]->value : 'UNDEF';
 
     FORMAT_WHITESPACE: {
-        my $r = qr/^(JsonEscape\w+)$/o;
+        my $r = qr/^(JsonEscape\w+|JsonSpace)$/o;
         $v = "#[\\$1]" if $t =~ $r;
     }
 

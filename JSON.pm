@@ -22,10 +22,10 @@ sub std_parse(@) {
          json_object => \&remove_novalue;
 
     my $st = parser_state tokens $text, [
-        JsonNum,       JsonQuote,      JsonComma,
-        JsonColon,     JsonCurlyBrace, JsonSquareBracket,
-        JsonEscapeSeq, JsonBool,       JsonNull,
-        JsonStringChar
+        JsonNum,        JsonQuote,      JsonComma,
+        JsonColon,      JsonCurlyBrace, JsonSquareBracket,
+        JsonEscapeSeq,  JsonBool,       JsonNull,
+        JsonStringChar, JsonSpace,
     ];
 
     no strict 'refs';
