@@ -1,4 +1,3 @@
-binmode STDOUT, ':utf8';
 
 # Basic grammar driver.
 # @author Joel Dalley
@@ -6,8 +5,10 @@ binmode STDOUT, ':utf8';
 
 use JBD::Core::List 'pairsof';
 use JBD::Core::File 'read';
+
 use JBD::Parser::DSL;
 use JBD::JSON::Grammar; 
+use JBD::JSON::Lexers;
 
 init json_string => \&remove_Nothing,
      json_array  => \&remove_Nothing,
@@ -33,7 +34,6 @@ my @cfg = (
 # Corpus tests.
 push @cfg, ['json_object', $_], for corpus_texts();
 
-
 for my $entry (@cfg) {
     my ($parser, $text) = @$entry;
     my $state = get_state("$text");
@@ -49,6 +49,7 @@ for my $entry (@cfg) {
              remove_Nothing($parsed);
         };
     
+    binmode STDOUT, ':utf8';
     while (my $pair = $pairs->()) {
         my ($label, $code, $n) = (@$pair, 0);
         print "$label $parser->($text)";
@@ -59,9 +60,10 @@ for my $entry (@cfg) {
     }
 }
 
-#####
+
 exit;
-#####
+####
+
 
 # @return array Array of strings to JSON corpus texts.
 sub corpus_texts { 
