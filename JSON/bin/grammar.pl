@@ -14,8 +14,13 @@ init json_string => \&remove_Nothing,
      json_array  => \&remove_Nothing,
      json_object => \&remove_Nothing;
 
+
+# Optionally specify a single json_corpus file to test.
+# If no argument, then all inline & corpus tests run.
+my $file = shift;
+
 # Inline tests.
-my @cfg = (
+my @cfg = $file ? () : (
     ['json_escape_seq',   '\\"'],
     ['json_null_literal', 'null'],
     ['json_bool_literal', 'true'],
@@ -32,7 +37,7 @@ my @cfg = (
     );
 
 # Corpus tests.
-push @cfg, ['json_object', $_], for corpus_texts();
+push @cfg, ['json_object', $_], for corpus_texts($file);
 
 for my $entry (@cfg) {
     my ($parser, $text) = @$entry;
@@ -65,14 +70,17 @@ exit;
 ####
 
 
+# @param string [opt] A single file to return text for.
 # @return array Array of strings to JSON corpus texts.
 sub corpus_texts { 
+    my $pattern = $_[0] ? $_[0] : 'json_corpus/*.json';
+
     map {
         $_ = read($_); 
         $_ =~ s{\R}{}g; 
         $_ =~ s{\s}{}g;
-        $_
-    } glob 'json_corpus/*.json';
+        $_;
+    } glob $pattern;
 }
 
 # @param arrayref Array of JBD::Parser::Tokens.
@@ -85,8 +93,8 @@ sub get_state {
     parser_state tokens \+shift, [
         JsonNum,       JsonQuote,      JsonComma, 
         JsonColon,     JsonCurlyBrace, JsonSquareBracket,
-        JsonEscapeSeq, JsonEscapeChar, JsonBool, 
-        JsonNull,      JsonStringChar,
+        JsonEscapeSeq, JsonBool,       JsonNull,
+        JsonStringChar
     ];
 }
 

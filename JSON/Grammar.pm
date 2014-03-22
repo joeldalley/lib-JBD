@@ -45,30 +45,21 @@ sub json_number()       { type JsonNum }
 sub json_bool_literal() { true | false }
 sub json_null_literal() { null }
 
-sub json_escape_char    { type JsonEscapeChar }
-sub json_escape_seq     { type JsonEscapeSeq }
-sub json_string_char()  { type JsonStringChar }
-sub star_string_chars() {
-    star(colon 
+sub json_escape_char() { type JsonEscapeChar }
+sub json_escape_seq()  { type JsonEscapeSeq }
+sub json_string_char() { 
+       colon 
        | comma 
        | type(JsonCurlyBrace) 
        | type(JsonSquareBracket)
        | type(JsonBool)
        | type(JsonNull)
        | json_number
-       | json_string_char) 
-    ^ star(colon 
-         | comma
-         | type(JsonCurlyBrace) 
-         | type(JsonSquareBracket)
-         | type(JsonBool)
-         | type(JsonNull)
-         | json_number
-         | json_string_char 
-         | json_escape_seq 
-         | json_escape_char)
+       | type(JsonStringChar)
+       | json_escape_seq;
 }
-sub json_string() { quote ^ star_string_chars ^ quote }
+sub star_string_chars() { star json_string_char }
+sub json_string()       { quote ^ star_string_chars ^ quote }
 
 sub star_comma_value()  { star(comma ^ json_value) }
 sub json_element_list() { json_value ^ star_comma_value }
