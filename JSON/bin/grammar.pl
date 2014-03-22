@@ -53,10 +53,7 @@ exit;
 # @param string [opt] A single file to return text for.
 # @return array Array of strings to JSON corpus texts.
 sub corpus_texts { 
-    map { $_ = read($_); 
-          $_ =~ s{\R}{}g; 
-          $_ =~ s{\s}{}g;
-          $_; } glob $_[0] ? $_[0] : 'json_corpus/*.json'
+    map read($_), glob $_[0] ? $_[0] : 'json_corpus/*.json';
 }
 
 # @param JBD::Parser::Token A token.

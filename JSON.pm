@@ -10,7 +10,7 @@ use JBD::Core::Exporter ':omni';
 use JBD::Parser::DSL;
 use JBD::JSON::Lexers;
 use JBD::JSON::Grammar;
-use JBD::JSON::Transformers 'remove_Nothing';
+use JBD::JSON::Transformers 'remove_novalue';
 
 # @param string $parser A JBD::Parser sub name.
 # @param scalar/ref $text JSON text.
@@ -18,8 +18,8 @@ use JBD::JSON::Transformers 'remove_Nothing';
 sub std_parse(@) {
     my ($parser, $text) = @_;
 
-    init json_array  => \&remove_Nothing,
-         json_object => \&remove_Nothing;
+    init json_array  => \&remove_novalue,
+         json_object => \&remove_novalue;
 
     my $st = parser_state tokens $text, [
         JsonNum,       JsonQuote,      JsonComma,
@@ -29,7 +29,7 @@ sub std_parse(@) {
     ];
 
     no strict 'refs';
-    remove_Nothing &$parser->($st) or die $st->error_string;
+    remove_novalue &$parser->($st) or die $st->error_string;
 }
 
 1;

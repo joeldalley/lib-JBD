@@ -49,6 +49,7 @@ sub json_null_literal() { null }
 
 sub json_escape_char() { type JsonEscapeChar }
 sub json_escape_seq()  { type JsonEscapeSeq }
+sub star_escape_seq()  { star json_escape_seq }
 sub json_string_char() { 
        colon 
        | comma 
@@ -69,15 +70,29 @@ sub json_string() {
 sub star_comma_value()  { star(comma ^ json_value) }
 sub json_element_list() { json_value ^ star_comma_value }
 sub star_element_list() { star json_element_list }
-sub json_array()        { lbrack ^ star_element_list ^ rbrack }
+sub json_array() { 
+      star_escape_seq ^ lbrack 
+    ^ star_escape_seq ^ star_element_list 
+    ^ star_escape_seq ^ rbrack
+    ^ star_escape_seq;
+}
 
-sub json_member()       { json_string ^ colon ^ json_value }
+sub json_member() { 
+      star_escape_seq ^ json_string 
+    ^ star_escape_seq ^ colon 
+    ^ star_escape_seq ^ json_value 
+    ^ star_escape_seq;
+}
 sub star_comma_member() { star(comma ^ json_member) }
 sub json_member_list()  { json_member ^ star_comma_member }
 sub star_member_list()  { star json_member_list }
-sub json_object()       { lbrace ^ star_member_list ^ rbrace }
+sub json_object() { 
+      star_escape_seq ^ lbrace
+    ^ star_escape_seq ^ star_member_list
+    ^ star_escape_seq ^ rbrace;
+}
 
-sub json_text()         { json_value }
+sub json_text() { json_value }
 
 
 #///////////////////////////////////////////////////////////////
@@ -92,12 +107,14 @@ sub init(%) {
         $trans{$sub} ? trans &$sub, $trans{$sub} : &$sub;
     };
 
-    $JV = $def->('json_null_literal')
-        | $def->('json_bool_literal')
-        | $def->('json_number')
-        | $def->('json_string')
-        | $def->('json_array')
-        | $def->('json_object');
+    $JV = star(json_escape_seq)
+        ^ ($def->('json_null_literal') |
+           $def->('json_bool_literal') |
+           $def->('json_number')       |
+           $def->('json_string')       |
+           $def->('json_array')        |
+           $def->('json_object'))
+        ^ star(json_escape_seq);
 }
 
 1;
