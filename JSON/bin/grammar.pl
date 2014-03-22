@@ -9,9 +9,9 @@ use JBD::Core::File 'read';
 use JBD::Parser::DSL;
 use JBD::JSON::Grammar; 
 use JBD::JSON::Lexers;
+use JBD::JSON::Transformers 'remove_Nothing';
 
-init json_string => \&remove_Nothing,
-     json_array  => \&remove_Nothing,
+init json_array  => \&remove_Nothing,
      json_object => \&remove_Nothing;
 
 
@@ -26,7 +26,7 @@ my @cfg = $file ? () : (
     ['json_bool_literal', 'true'],
     ['json_bool_literal', 'false'],
     ['json_string_char',  'chars'],
-    ['star_string_chars', "String chars?\n"],
+    ['star_string_char',  "String chars?\n"],
     ['json_string',       qq|"This. Is\na string?\r\f"|],
     ['json_member_list',  '"nada":null'],
     ['json_element_list', 'true, false, null, 1, 2'],
@@ -82,10 +82,6 @@ sub corpus_texts {
         $_;
     } glob $pattern;
 }
-
-# @param arrayref Array of JBD::Parser::Tokens.
-# @return arrayref Same array, minus Nothing-type tokens.
-sub remove_Nothing { [grep !$_->typeis(Nothing), @{$_[0]}] }
 
 # @param string Input text.
 # @return JBD::Parser::State

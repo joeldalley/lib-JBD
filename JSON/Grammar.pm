@@ -6,6 +6,8 @@
 package JBD::JSON::Grammar;
 
 use JBD::Core::Exporter;
+
+use JBD::JSON::Transformers 'reduce_JsonString';
 use JBD::JSON::Lexers;
 use JBD::Parser::DSL;
 
@@ -13,7 +15,7 @@ our @EXPORT = qw(init
     json_member_list json_element_list
     json_bool_literal json_null_literal
     json_escape_char json_escape_seq
-    json_string_char star_string_chars
+    json_string_char star_string_char
     json_member json_object json_string
     json_array json_value json_text
     );
@@ -58,8 +60,11 @@ sub json_string_char() {
        | type(JsonStringChar)
        | json_escape_seq;
 }
-sub star_string_chars() { star json_string_char }
-sub json_string()       { quote ^ star_string_chars ^ quote }
+sub star_string_char() { star json_string_char }
+sub json_string() { 
+    trans quote ^ star_string_char ^ quote,
+          \&reduce_JsonString;
+}
 
 sub star_comma_value()  { star(comma ^ json_value) }
 sub json_element_list() { json_value ^ star_comma_value }

@@ -9,11 +9,10 @@ use JBD::Core::Exporter;
 use JBD::Parser::DSL;
 
 our @EXPORT = qw(
-    JsonQuote JsonColon JsonComma
-    JsonCurlyBrace JsonSquareBracket
     JsonNum JsonNull JsonBool 
-    JsonStringChar JsonEscapeSeq 
-    UnicodeEscapeSeq JsonEscapeChar 
+    JsonSquareBracket JsonCurlyBrace 
+    JsonColon JsonComma JsonQuote JsonStringChar 
+    JsonEscapeSeq UnicodeEscapeSeq JsonEscapeChar 
     );
 
 sub UnicodeEscapeSeq {
