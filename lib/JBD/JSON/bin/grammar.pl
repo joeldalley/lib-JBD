@@ -4,7 +4,7 @@
 # @version 2014/Mar/21
 
 use JBD::Core::List 'pairsof';
-use JBD::Core::File 'read';
+use File::Slurp 'read_file';
 
 use JBD::Parser::DSL;
 use JBD::JSON 'std_parse';
@@ -54,7 +54,7 @@ exit;
 # @param string [opt] A single file to return text for.
 # @return array Array of strings to JSON corpus texts.
 sub corpus_texts { 
-    map read($_), glob $_[0] ? $_[0] : 'json_corpus/*.json';
+    map read_file($_), glob $_[0] ? $_[0] : 'json_corpus/*.json';
 }
 
 # @param JBD::Parser::Token A token.
