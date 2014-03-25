@@ -1,22 +1,13 @@
 lib-JBD
 =======
 
-Contains JBD::Core and JBD::Tempo modules, which I use on my website.
+The JBD namespace began as a series of very small, no-dependency alternatives or work-alikes to standard tools like File::Slurp.<br/>
+Those tools are found at JBD::Core.
 
-[My Main Website](http://www.joelbdalley.com)<br/>
-[My Running Site](http://tempo.joelbdalley.com)
+The JBD namespace also contains lexing, parsing and grammar tools.<br/>
+For JSON tokenizing and parsing, see JBD::JSON.<br/>
+For general parsing tools, see JBD::Parser.
 
-lib-JBD also contains JBD::Parser and a JSON module built upon it, JBD::JSON.
-
-lib-JBD is copyright &copy; Joel Dalley 2013.<br/>
+lib-JBD is copyright &copy; Joel Dalley 2013-2014.<br/>
 lib-JBD is distributed under the same license as Perl itself.<br/>
 For more details, see the full text of the license in the file LICENSE.
-
-Notes
-=====
-
-For quote-unquote security (in a couple web scripts), I have git-ignored one file: `JBD::Tempo::Passkey`, which has the following structure:
-
-```perl
-package JBD::Tempo::Passkey; our $KEY = 'super-duper-secret';
-```
