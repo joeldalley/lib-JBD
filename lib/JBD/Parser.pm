@@ -131,4 +131,69 @@ sub trans($$) {
     };
 }
 
-1; 
+1;
+
+__END__
+
+=head1 SYNOPSIS
+
+This module is based on the parsing strategy and parsing primitives shown in chapter 8 of Higher Order Perl, by Mark Jason Dominus.
+
+=over
+
+=item * 
+
+L<http://hop.perl.plover.com/book/pdf/08Parsing.pdf>
+
+=item *
+
+L<http://hop.perl.plover.com/>
+
+=back
+
+=head2 EXAMPLE: A Number Parser
+
+Suppose that, by some means, you have tokenized some input text into the following JBD::Parser::Tokens:
+
+ # It's not important where the JBD::Parser::Tokens come from,
+ # so for this example, we will construct them directly.
+ use JBD::Parser::DSL;
+
+ my @tokens = (
+     JBD::Parser::Token->new('Num', 1.0),
+     JBD::Parser::Token->new('Num', -3),
+     JBD::Parser::Token->new('Num', -.00089e+001),
+     );
+ my $state  = parser_state \@tokens;
+
+ # star() means "match any number of", and 
+ # a type(Num) parser is one that succeeds if 
+ # it checks a token's type, and it is 'Num'.
+ # This parser matches zero or more Num-type tokens.
+ my $parser = star type Num;
+
+ my $parsed_tokens = $parser->($state)
+     or die $state->error_string;
+
+ use Data::Dumper;
+ print Dumper $parsed_tokens;
+
+Produces the following output:
+
+ $VAR1 = [
+          bless( [
+                   'Num',
+                   '1'
+                 ], 'JBD::Parser::Token' ),
+          bless( [
+                   'Num',
+                   -3
+                 ], 'JBD::Parser::Token' ),
+          bless( [
+                   'Num',
+                   '-0.0089'
+                 ], 'JBD::Parser::Token' ),
+          bless( [
+                   'Nothing'
+                 ], 'JBD::Parser::Token' )
+        ];
