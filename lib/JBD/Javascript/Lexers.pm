@@ -98,7 +98,7 @@ sub MultiLineCommentChars {
             return $not . ($multi ? $multi : '');
         }
         elsif ($chars && $chars =~ m{^\*}o) {
-            my $post = PostAsteriskCommentChars->(substr $chars, 1);
+            my $post = &PostAsteriskCommentChars->(substr $chars, 1);
             return '*' . ($post ? $post : '');
         }
 
@@ -167,16 +167,351 @@ sub Comment {
     }, 'Comment';
 }
 
-sub Token { bless sub {}, 'Token' }
-
-sub DivPunctuator { bless sub {}, 'DivPunctuator' }
-
-sub RegularExpressionLiteral {
-    bless sub {}, 'RegularExpressionLiteral'
+sub Infinity {
+    bless { 
+        shift =~ /^(\+|-)Infinity/o or return; 
+        $1 . 'Infinity';
+    }, 'Infinity';
 }
 
-sub InputElementDiv { bless sub {}, 'InputElementDiv' }
+sub HexDigit {
+    bless sub { shift =~ /^([0-9a-f])/io; $1 }, 'HexDigit';
+}
 
-sub InputElementRegExp { bless sub {}, 'InputElementRegExp' }
+sub HexIntegerLiteral {
+    bless sub { 
+        my $chars = shift;
+        if ($chars =~ /^0x/o) {
+            my $digit = HexDigit->(substr $chars, 2) or return;
+            return '0x' . $digit;
+        }
+        my $literal = &HexIntegerLiteral->($chars) or return;
+        $chars = substr $chars, length $literal;
+        my $digit = HexDigit->($chars) or return;
+        $literal . $digit;
+    }, 'HexIntegerLiteral';
+}
+
+sub DecimalDigit {
+    my $or = join '|', qw(0 1 2 3 4 5 6 7 8);
+    my $r = qr/^($or)/o;
+    bless sub { shift =~ $r; $1 }, 'DecimalDigit';
+}
+
+sub NonZeroDigit {
+    bless sub { 
+        my $chars = shift;
+        return if $chars =~ /^0/o;
+        DecimalDigit->($chars);
+    }, 'NonZeroDigit';
+}
+
+sub DecimalDigits {
+    bless sub {
+        my $chars = shift;
+        my $digits = DecimalDigit->($chars) or return;
+        while (my $next = DecimalDigit->($chars)) {
+            $digits .= $next;
+        }
+        $digits;
+    }, 'DecimalDigits';
+}
+
+sub DecimalIntegerLiteral {
+    bless sub {
+        my $chars = shift;
+
+        return unless $chars =~ /^0/o;
+        $chars = substr $chars, 1;
+
+        my $digit = NonZeroDigit->($chars);
+        return '0' unless $digit;
+
+        $chars = substr $chars, length $digit;
+        my $digits = DecimialDigits->($chars);
+
+        '0' . $digit . ($digits ? $digits : '');
+    }, 'DecimalIntegerLiteral';
+}
+
+sub DecimalLiteral {
+    bless sub {
+        my $chars = shift;
+
+        my $first = $chars =~ /^\./o && '.'
+                 || DecimalIntegerLiteral->($chars);
+
+        if ($first eq '.') {
+            $chars = substr $chars, 1;
+            my $digits = DecimalDigits->($chars) or return;
+            $chars = substr $chars, (1 + length $digits);
+            my $exp = ExponentPart->($chars);
+            $first . $digits . ($exp ? $exp : '');
+        }
+        else {
+            $chars = substr $chars, length $first;
+
+            if ($chars =~ /^\./o) {
+                my $digits = DecimalDigits->($chars);
+                my $exp; 
+                if ($digits) {
+                    $chars = substr $chars, (1 + length $digits);
+                    $exp = ExponentPart->($chars);
+                }
+
+                return $first . ($digits ? $digits : '') 
+                              . ($exp ? $exp : '');
+            }
+            else {
+                my $exp = ExponentPart->($chars);
+                return $first . ($exp ? $exp : '');
+            }
+        }
+    }, 'DecimalLiteral';
+}
+
+sub NumericLiteral {
+    bless sub {
+        my $chars = shift;
+        DecimalLiteral->($chars)
+        || HexIntegreLiteral->($chars);
+    }, 'NumericLiteral';
+}
+
+sub BooleanLiteral {
+    sub { shift =~ /^(true|false)/o }, 'BooleanLiteral';
+} 
+sub NullLiteral { 
+    bless sub { shift =~ /^null/o; $1 }, 'NullLiteral';
+}
+
+sub StringLiteral {
+    bless sub {
+        my $chars = shift;
+    }, 'StringLiteral';
+}
+
+sub RegularExpressionFirstChar {
+    bless sub {
+        my $chars = shift;
+        my $non_term = RegularExpressionNonTerminator->($chars);
+        if ($non_term) {
+        }
+    }, 'RegularExpressionFirstChar';
+}
+
+sub RegularExpressionChar {
+    bless sub {
+    }, 'RegularExpressionChar';
+}
+
+sub RegularExpressionTags {
+    bless sub { 
+        my $chars = shift;
+    }, 'RegularExpressionTags';
+}
+
+sub RegularExpressionBody {
+    bless sub {
+        my $chars = shift;
+        my $first = RegularExpressionFirstChar->($chars) or return;
+        my $chars = RegularExpressionChars->($chars) or return;
+        $first . $chars;
+    }, 'RegularExpressionBody';
+}
+
+sub RegularExpressionLiteral {
+    bless sub {
+        my $chars = shift;
+        my $r = qr/^\//o;
+        return unless $chars =~ $r;
+        my $body = RegularExpressionBody->($chars) or return;
+        $chars = substr $chars, 1;
+        return unless $chars =~ $r;
+        my $flags = RegularExpressionTags->($chars) or return;
+        "/$body/$flags";
+    }, 'RegularExpressionLiteral';
+}
+
+sub Literal {
+    bless sub {
+        my $chars = shift;
+        NullLiteral->($chars)
+        || BooleanLiteral->($chars)
+        || NumericLiteral->($chars)
+        || StringLiteral->($chars)
+        || RegularExpressionLiteral->($chars);
+    }, 'Literal';
+}
+
+sub SignedInteger {
+    bless sub {
+        my $chars = shift;
+        $chars =~ m/^(\+|-)/o;
+        my $sign = $1;
+        $chars = substr $chars, 1 if $sign;
+        my $digits = DecimalDigits->($chars) or return;
+        ($sign ? $sign : '') . $digits;
+    }, 'SignedInteger';
+}
+
+sub ExponentIndicator {
+    bless sub { shift =~ /^(e|E)/o; $1 }, 'ExponentIndicator';
+}
+
+sub ExponentPart {
+    bless sub {
+        my $chars = shift;
+        my $exp = ExponentIndicator->($chars) or return;
+        $chars = substr $chars, length $exp;
+        my $int = SignedInteger->($chars) or return;
+        $exp . $int;
+    }, 'ExponentPart';
+}
+
+sub Punctuator {
+    my $or = join '|', (
+        '{', '}', '(', ')', '[', ']', '.', ';', ',', '<',
+        '>=', '==', '!=', '===', '+', '-', '*', '%', '<<',
+        '>>', '>>>', '&', '!', '~', '&&', '||', '=', '+=',
+        '-=', '*=', '>>=', '>>>=', '&=', '|='
+        );
+    my $r = qr/$or/o;
+    bless sub { shift =~ $r; $1 }, 'Punctuator';
+}
+
+sub UnicodeDigit {}
+
+sub UnicodeLetter {}
+
+sub UnicodeCombiningMark {}
+
+sub UnicodeConnectorPunctuation {}
+
+sub IdentifierStart {
+    bless sub {
+        my $chars = shift;
+
+        my $letter = UnicodeLetter->($chars);
+        return $letter if $letter;
+
+        $chars =~ /^(\$|_)/o;
+        return $1 if $1;
+
+        return unless $chars =~ /^\\/o;
+        $chars = substr $chars, 1;
+
+        my $seq = UnicodeEscapeSequence->($chars);
+        $seq ? "/$seq" : undef;
+    }, 'IdentifierStart';
+}
+
+sub IdentifierPart {
+    bless sub {
+        my $chars = shift;
+
+        my $part = IdentifierStart->($chars)
+                || UnicodeCombiningMark->($chars)
+                || UnicodeDigit->($chars)
+                || UnicodeConnectorPunctuation->($chars);
+        return $part if $part;
+
+        $chars =~ '\u200C';
+        return $1 if $1;
+
+        $chars =~ '\u200D';
+        $1;
+    }, 'IdentifierPart';
+}
+
+sub IdentifierName {
+    bless sub {
+        my $chars = shift;
+        my $start = IdentifierStart->new($chars);
+        return $start if $start;
+        my $name = &IdenitiferName->($chars) or return;
+        my $part = IdentifierPart(substr $chars, length $name);
+        $name . $part;
+    }, 'IdentifyName';
+}
+
+sub Identifier {
+    bless sub {
+        my $chars = shift;
+        return if ReservedWord->($chars);
+        IdentifierName->($chars);
+    }, 'Identifier';
+}
+
+sub Keyword {
+    my $or = join '|', (qw(
+        break case catch continue debugger default delete
+        do else finally for function if in instanceof typeof
+        new var return void switch while this with throw try
+        ));
+    my $r = qr/$or/o;
+    bless sub { shift =~ $r; $1 }, 'Keyword';
+}
+
+sub FutureReservedWord {
+    my $or = join '|', (qw(
+        class enum extends super const export import 
+        implements let private public interface package 
+        protected static yield
+        ));
+    bless sub {
+    }, 'FutureReservedWord';
+}
+
+sub ReservedWord {
+    bless sub {
+        my $chars = shift;
+        Keyword->($chars)
+        || FutureReservedWord->($chars)
+        || NullLiteral->($chars)
+        || BooleanLiteral->($chars);
+    }, 'ReservedWord';
+}
+
+sub Token { 
+    bless sub {
+        my $chars = shift;
+        IdentifierName->($chars)
+        || Punctuator->($chars)
+        || NumericLiteral->($chars)
+        || StringLiteral->($chars);
+    }, 'Token';
+}
+
+sub DivPunctuator { 
+    bless sub {
+        my $chars = shift;
+        return '/=' if index($chars, '/=') == 0;
+        return '/'  if index($chars, '/') == 0;
+        undef;
+    }, 'DivPunctuator';
+}
+
+sub InputElementDiv {
+    bless sub {
+        my $chars = shift;
+        WhiteSpace->($chars)
+        || LineTerminator->($chars)
+        || Comment->($chars)
+        || Token->($chars)
+        || DivPunctuator->($chars);
+    }, 'InputElementDiv';
+}
+
+sub InputElementRegExp {
+    bless sub {
+        my $chars = shift;
+        WhiteSpace->($chars)
+        || LineTerminator->($chars)
+        || Comment->($chars)
+        || Token->($chars)
+        || RegularExpressionLiteral->($chars);
+    } , 'InputElementRegExp';
+}
 
 1;
