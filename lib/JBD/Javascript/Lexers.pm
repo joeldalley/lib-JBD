@@ -374,11 +374,21 @@ sub UnicodeDigit {
     bless sub { shift =~ /^(\d+)/o; $1 }, 'UnicodeDigit';
 }
 
-sub UnicodeLetter {}
+sub UnicodeLetter { 
+    bless sub { Word->(shift) }, 'UnicodeLetter';
+}
 
-sub UnicodeCombiningMark {}
+sub UnicodeCombiningMark {
+    bless sub {
+        shift =~ /^[\p{Mn}\p{Mc}]/o; $1;
+        }, 'UnicodeCombiningMark';
+}
 
-sub UnicodeConnectorPunctuation {}
+sub UnicodeConnectorPunctuation {
+    bless sub {
+        shift =~ /^\p{Pc}/o; $1;
+        }, 'UnicodeConnectorPunctuation';
+}
 
 sub IdentifierStart {
     bless sub {
