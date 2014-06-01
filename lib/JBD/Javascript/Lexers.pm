@@ -168,8 +168,8 @@ sub Comment {
 }
 
 sub Infinity {
-    bless { 
-        shift =~ /^(\+|-)Infinity/o or return; 
+    bless sub { 
+        shift =~ /^(\+|-)Infinity/o or return;
         $1 . 'Infinity';
     }, 'Infinity';
 }
@@ -199,7 +199,7 @@ sub DecimalDigit {
 }
 
 sub NonZeroDigit {
-    bless sub { 
+    bless sub {
         my $chars = shift;
         return if $chars =~ /^0/o;
         DecimalDigit->($chars);
@@ -315,7 +315,7 @@ sub RegularExpressionBody {
     bless sub {
         my $chars = shift;
         my $first = RegularExpressionFirstChar->($chars) or return;
-        my $chars = RegularExpressionChars->($chars) or return;
+        $chars = RegularExpressionChars->($chars) or return;
         $first . $chars;
     }, 'RegularExpressionBody';
 }
@@ -416,10 +416,10 @@ sub IdentifierPart {
                 || UnicodeConnectorPunctuation->($chars);
         return $part if $part;
 
-        $chars =~ '\u200C';
+        $chars =~ '\\\\u200C';
         return $1 if $1;
 
-        $chars =~ '\u200D';
+        $chars =~ '\\\\u200D';
         $1;
     }, 'IdentifierPart';
 }
