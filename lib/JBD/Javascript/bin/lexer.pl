@@ -5,8 +5,9 @@
 
 use lib '../../../'; # Needed for development.
 
+use utf8;
 use JBD::Parser::DSL;
-use JBD::Javascript::Lexers;
+use JBD::Javascript::Lexers qw(LineTerminator LineTerminatorSequence Comment UnicodeDigit);
 
 my $js;
 
@@ -17,11 +18,13 @@ $js = <<JS;
  */
 
 // Comment2.
+
+۲
 JS
 
-my $tokens = tokens \$js, [ 
+my $tokens = tokens \$js, [
     LineTerminator, LineTerminatorSequence,
-    Comment
+    Comment, UnicodeDigit
 ];
 
 puke $tokens;

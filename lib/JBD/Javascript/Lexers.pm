@@ -6,18 +6,8 @@ package JBD::Javascript::Lexers;
 # @author Joel Dalley
 # @version 2014/Apr/13
 
-use JBD::Core::Exporter;
+use JBD::Core::Exporter ':omni';
 use JBD::Parser::DSL;
-
-our @EXPORT = qw(
-    SourceCharacter WhiteSpace 
-    LineTerminator LineTerminatorSequence
-    SingleLineCommentChar SingleLineCommentChars
-    MultiLineCommentChars PostAsteriskCommentChars
-    MultiLineNotAsteriskChar 
-    MultiLineNotForwardSlashOrAsteriskChar
-    SingleLineComment MultiLineComment Comment
-    );
 
 sub SourceCharacter {
     bless sub {
@@ -380,7 +370,9 @@ sub Punctuator {
     bless sub { shift =~ $r; $1 }, 'Punctuator';
 }
 
-sub UnicodeDigit {}
+sub UnicodeDigit {
+    bless sub { shift =~ /^(\d+)/o; $1 }, 'UnicodeDigit';
+}
 
 sub UnicodeLetter {}
 
