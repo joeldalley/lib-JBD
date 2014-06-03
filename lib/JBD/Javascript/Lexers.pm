@@ -6,8 +6,24 @@ package JBD::Javascript::Lexers;
 # @author Joel Dalley
 # @version 2014/Apr/13
 
-use JBD::Core::Exporter ':omni';
+use JBD::Core::Exporter;
 use JBD::Parser::DSL;
+
+our @EXPORT = qw(
+    SourceCharacter WhiteSpace LineTerminator LineTerminatorSequence
+    MultiLineNotForwardSlashOrAsteriskChar PostAsteriskCommentChars
+    MultiLineNotAsteriskChar MultiLineCommentChars MultiLineComment
+    SingleLineCommentChar SingleLineCommentChars SingleLineComment
+    Comment Infinity HexDigit HexIntegerLiteral DecimalDigit NonZeroDigit
+    DecimalDigits DecimalIntegerLiteral DecimalLiteral NumericLiteral
+    BooleanLiteral NullLiteral StringLiteral RegularExpressionFirstChar
+    RegularExpressionChar RegularExpressionTags RegularExpressionBody
+    RegularExpressionLiteral Literal SignedInteger ExponentIndicator
+    ExponentPart Punctuator UnicodeDigit UnicodeLetter UnicodeCombiningMark
+    UnicodeConnectorPunctuation IdentifierStart IdentifierPart IdentifierName
+    Identifier Keyword FutureReservedWord ReservedWord Token DivPunctuator
+    InputElementDiv InputElementRegExp
+    );
 
 sub SourceCharacter {
     bless sub {

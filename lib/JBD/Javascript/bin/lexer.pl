@@ -7,7 +7,7 @@ use lib '../../../'; # Needed for development.
 
 use utf8;
 use JBD::Parser::DSL;
-use JBD::Javascript::Lexers qw(LineTerminator LineTerminatorSequence Comment UnicodeDigit);
+use JBD::Javascript::Lexers;
 
 my $js;
 
