@@ -10,11 +10,19 @@ use JBD::Parser::DSL;
 use JBD::Javascript::Lexers;
 use File::Slurp 'read_file';
 
+my $only_test = shift;
+
 my %cfg = (
     'comments.js' => [
         LineTerminator, LineTerminatorSequence, Comment
         ],
+    'digits.js' => [
+        WhiteSpace, DecimalDigits, HexIntegerLiteral
+        ],
     );
+
+%cfg = ($only_test => $cfg{$only_test}) 
+    if $only_test && exists $cfg{$only_test};
 
 while (my ($file, $lexers) = each %cfg) {
     my $js     = read_file "javascript_corpus/$file";

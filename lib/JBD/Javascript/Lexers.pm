@@ -187,19 +187,23 @@ sub HexDigit {
 sub HexIntegerLiteral {
     bless sub { 
         my $chars = shift;
-        if ($chars =~ /^0x/o) {
-            my $digit = HexDigit->(substr $chars, 2) or return;
-            return '0x' . $digit;
+
+        my $literal;
+        if (index($chars, '0x') == 0) {
+            $chars = substr $chars, 2;
+            my $digit;
+            while ($digit = HexDigit->($chars)) {
+                $chars = substr $chars, 1;
+                $literal .= $digit;
+            }
+            return unless $literal;
+            return '0x' . $literal;
         }
-        my $literal = &HexIntegerLiteral->($chars) or return;
-        $chars = substr $chars, length $literal;
-        my $digit = HexDigit->($chars) or return;
-        $literal . $digit;
     }, 'HexIntegerLiteral';
 }
 
 sub DecimalDigit {
-    my $or = join '|', qw(0 1 2 3 4 5 6 7 8);
+    my $or = join '|', qw(0 1 2 3 4 5 6 7 8 9);
     my $r = qr/^($or)/o;
     bless sub { shift =~ $r; $1 }, 'DecimalDigit';
 }
@@ -215,8 +219,9 @@ sub NonZeroDigit {
 sub DecimalDigits {
     bless sub {
         my $chars = shift;
-        my $digits = DecimalDigit->($chars) or return;
+        my $digits;
         while (my $next = DecimalDigit->($chars)) {
+            $chars = substr $chars, 1;
             $digits .= $next;
         }
         $digits;
@@ -247,7 +252,7 @@ sub DecimalLiteral {
         my $first = $chars =~ /^\./o && '.'
                  || DecimalIntegerLiteral->($chars);
 
-        if ($first eq '.') {
+        if ($first && $first eq '.') {
             $chars = substr $chars, 1;
             my $digits = DecimalDigits->($chars) or return;
             $chars = substr $chars, (1 + length $digits);
