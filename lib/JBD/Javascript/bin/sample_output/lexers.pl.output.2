@@ -42,12 +42,28 @@ $VAR1 = [
                    ' '
                  ], 'JBD::Parser::Token' ),
           bless( [
-                   'DecimalIntegerLiteral',
-                   '5'
+                   'SignedInteger',
+                   '-5'
                  ], 'JBD::Parser::Token' ),
           bless( [
                    'WhiteSpace',
-                   '
+                   ' '
+                 ], 'JBD::Parser::Token' ),
+          bless( [
+                   'SignedInteger',
+                   '+83'
+                 ], 'JBD::Parser::Token' ),
+          bless( [
+                   'WhiteSpace',
+                   ' '
+                 ], 'JBD::Parser::Token' ),
+          bless( [
+                   'ExponentPart',
+                   'e-2882'
+                 ], 'JBD::Parser::Token' ),
+          bless( [
+                   'WhiteSpace',
+                   ' 
 '
                  ], 'JBD::Parser::Token' )
         ];

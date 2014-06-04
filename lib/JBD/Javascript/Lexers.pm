@@ -203,9 +203,15 @@ sub HexIntegerLiteral {
 }
 
 sub DecimalDigit {
-    my $or = join '|', qw(0 1 2 3 4 5 6 7 8 9);
-    my $r = qr/^($or)/o;
-    bless sub { shift =~ $r; $1 }, 'DecimalDigit';
+    my @digits = qw(0 1 2 3 4 5 6 7 8 9);
+
+    bless sub {
+        my $chars = shift or return;
+        my $first = substr $chars, 0, 1;
+        my @match = grep $first eq $_, @digits;
+        return $first if grep $first eq $_, @digits;
+        undef;
+    }, 'DecimalDigit';
 }
 
 sub NonZeroDigit {
@@ -218,7 +224,7 @@ sub NonZeroDigit {
 
 sub DecimalDigits {
     bless sub {
-        my $chars = shift;
+        my $chars = shift or return;
         my $digits;
         while (my $next = DecimalDigit->($chars)) {
             $chars = substr $chars, 1;
@@ -356,8 +362,8 @@ sub Literal {
 
 sub SignedInteger {
     bless sub {
-        my $chars = shift;
-        $chars =~ m/^(\+|-)/o;
+        my $chars = shift or return;
+        $chars =~ m/^(\+|\-)/o;
         my $sign = $1;
         $chars = substr $chars, 1 if $sign;
         my $digits = DecimalDigits->($chars) or return;
