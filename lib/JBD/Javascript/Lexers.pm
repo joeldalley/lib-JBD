@@ -232,16 +232,15 @@ sub DecimalIntegerLiteral {
     bless sub {
         my $chars = shift;
 
-        return unless $chars =~ /^0/o;
-        $chars = substr $chars, 1;
-
-        my $digit = NonZeroDigit->($chars);
-        return '0' unless $digit;
+        my $digit;
+           $digit = 0 if index($chars, '0') == 0;
+           $digit = NonZeroDigit->($chars) if !defined $digit;
+        return unless defined $digit;
 
         $chars = substr $chars, length $digit;
-        my $digits = DecimialDigits->($chars);
+        my $digits = DecimalDigits->($chars);
 
-        '0' . $digit . ($digits ? $digits : '');
+        $digit . ($digits ? $digits : '');
     }, 'DecimalIntegerLiteral';
 }
 
