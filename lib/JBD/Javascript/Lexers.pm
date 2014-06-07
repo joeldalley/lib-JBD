@@ -269,10 +269,20 @@ sub NumericLiteral {
 }
 
 sub BooleanLiteral {
-    sub { shift =~ /^(true|false)/o }, 'BooleanLiteral';
+    bless sub { 
+        my $chars = shift or return;
+        return 'true' if index($chars, 'true') == 0;
+        return 'false' if index($chars, 'false') == 0;
+        undef;
+    }, 'BooleanLiteral';
 } 
+
 sub NullLiteral { 
-    bless sub { shift =~ /^null/o; $1 }, 'NullLiteral';
+    bless sub { 
+        my $chars = shift or return;
+        return 'null' if index($chars, 'null') == 0;
+        undef;
+    }, 'NullLiteral';
 }
 
 sub StringLiteral {

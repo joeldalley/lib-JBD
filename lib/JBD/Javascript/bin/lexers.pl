@@ -8,7 +8,9 @@ use lib '../../../'; # Needed for development.
 
 use JBD::Parser::DSL;
 use JBD::Javascript::Lexers;
+
 use File::Slurp 'read_file';
+use JBD::Core::List 'pairsof';
 
 my $only_test = shift;
 
@@ -19,6 +21,9 @@ my %cfg = (
     'digits.js' => [
         WhiteSpace, DecimalLiteral, HexIntegerLiteral, 
         DecimalIntegerLiteral, ExponentPart, SignedInteger
+        ],
+    'boolean_and_null.js' => [
+        WhiteSpace, BooleanLiteral, NullLiteral
         ],
     );
 
