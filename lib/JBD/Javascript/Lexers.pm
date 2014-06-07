@@ -209,7 +209,7 @@ sub DecimalDigit {
         my $chars = shift or return;
         my $first = substr $chars, 0, 1;
         my @match = grep $first eq $_, @digits;
-        return $first if grep $first eq $_, @digits;
+        return $first if scalar grep $first eq $_, @digits;
         undef;
     }, 'DecimalDigit';
 }
@@ -226,7 +226,7 @@ sub DecimalDigits {
     bless sub {
         my $chars = shift or return;
         my $digits;
-        while (my $next = DecimalDigit->($chars)) {
+        while (defined (my $next = DecimalDigit->($chars))) {
             $chars = substr $chars, 1;
             $digits .= $next;
         }
@@ -235,54 +235,28 @@ sub DecimalDigits {
 }
 
 sub DecimalIntegerLiteral {
-    bless sub {
-        my $chars = shift;
-
-        my $digit;
-           $digit = 0 if index($chars, '0') == 0;
-           $digit = NonZeroDigit->($chars) if !defined $digit;
-        return unless defined $digit;
-
-        $chars = substr $chars, length $digit;
-        my $digits = DecimalDigits->($chars);
-
-        $digit . ($digits ? $digits : '');
-    }, 'DecimalIntegerLiteral';
+    bless sub { DecimalDigits->(shift) }, 'DecimalIntegerLiteral';
 }
 
 sub DecimalLiteral {
     bless sub {
         my $chars = shift;
 
-        my $first = $chars =~ /^\./o && '.'
+        my $first = index($chars, '.') == 0 && '.'
                  || DecimalIntegerLiteral->($chars);
+        return unless defined $first;
+        $chars = substr $chars, length $first;
 
-        if ($first && $first eq '.') {
-            $chars = substr $chars, 1;
-            my $digits = DecimalDigits->($chars) or return;
-            $chars = substr $chars, (1 + length $digits);
-            my $exp = ExponentPart->($chars);
-            $first . $digits . ($exp ? $exp : '');
-        }
-        else {
-            $chars = substr $chars, length $first;
+        $first eq '.' or do {
+            return unless index($chars, '.') == 0;
+            $first .= '.';
+        };
+        $chars = substr $chars, 1;
 
-            if ($chars =~ /^\./o) {
-                my $digits = DecimalDigits->($chars);
-                my $exp; 
-                if ($digits) {
-                    $chars = substr $chars, (1 + length $digits);
-                    $exp = ExponentPart->($chars);
-                }
-
-                return $first . ($digits ? $digits : '') 
-                              . ($exp ? $exp : '');
-            }
-            else {
-                my $exp = ExponentPart->($chars);
-                return $first . ($exp ? $exp : '');
-            }
-        }
+        my $digits = DecimalDigits->($chars);
+        return unless defined $digits;
+        my $exp = &ExponentPart->(substr $chars, length $digits);
+        return $first . $digits . (defined $exp ? $exp : '');
     }, 'DecimalLiteral';
 }
 
@@ -372,16 +346,19 @@ sub SignedInteger {
 }
 
 sub ExponentIndicator {
-    bless sub { shift =~ /^(e|E)/o; $1 }, 'ExponentIndicator';
+    bless sub { 
+        my $chars = shift or return;
+        $chars =~ /^(e|E)/o; $1;
+    }, 'ExponentIndicator';
 }
 
 sub ExponentPart {
     bless sub {
-        my $chars = shift;
-        my $exp = ExponentIndicator->($chars) or return;
-        $chars = substr $chars, length $exp;
-        my $int = SignedInteger->($chars) or return;
-        $exp . $int;
+        my $chars = shift or return;
+        my $indicator = ExponentIndicator->($chars) or return;
+        $chars = substr $chars, 1;
+        my $signed = SignedInteger->($chars) or return;
+        $indicator . $signed;
     }, 'ExponentPart';
 }
 

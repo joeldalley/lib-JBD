@@ -17,8 +17,8 @@ my %cfg = (
         LineTerminator, LineTerminatorSequence, Comment
         ],
     'digits.js' => [
-        WhiteSpace, HexIntegerLiteral, DecimalIntegerLiteral,
-        ExponentPart, SignedInteger
+        WhiteSpace, DecimalLiteral, HexIntegerLiteral, 
+        DecimalIntegerLiteral, ExponentPart, SignedInteger
         ],
     );
 
