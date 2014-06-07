@@ -12,9 +12,7 @@ use JBD::Javascript::Lexers;
 use File::Slurp 'read_file';
 use JBD::Core::List 'pairsof';
 
-my $only_test = shift;
-
-my %cfg = (
+my @cfg = (
     'comments.js' => [
         LineTerminator, LineTerminatorSequence, Comment
         ],
@@ -27,10 +25,9 @@ my %cfg = (
         ],
     );
 
-%cfg = ($only_test => $cfg{$only_test}) 
-    if $only_test && exists $cfg{$only_test};
-
-while (my ($file, $lexers) = each %cfg) {
+my $iter = pairsof @cfg;
+while (my $pair = $iter->()) {
+    my ($file, $lexers) = @$pair;
     my $js     = read_file "javascript_corpus/$file";
     my $tokens = tokens $js, $lexers;
 
