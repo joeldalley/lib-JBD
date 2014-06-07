@@ -18,7 +18,8 @@ my @cfg = (
         ],
     'digits.js' => [
         WhiteSpace, DecimalLiteral, HexIntegerLiteral, 
-        DecimalIntegerLiteral, ExponentPart, SignedInteger
+        DecimalIntegerLiteral, ExponentPart, SignedInteger,
+        Infinity
         ],
     'boolean_and_null.js' => [
         WhiteSpace, BooleanLiteral, NullLiteral

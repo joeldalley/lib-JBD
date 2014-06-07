@@ -47,7 +47,7 @@ sub LineTerminatorSequence {
 
 sub MultiLineNotForwardSlashOrAsteriskChar {
     bless sub {
-        my $chars = shift;
+        my $chars = shift or return;
         return if $chars =~ m{^(/|\*)}o;
         SourceCharacter->($chars);
     }, 'MultiLineNotForwardSlashOrAsteriskChar';
@@ -55,7 +55,7 @@ sub MultiLineNotForwardSlashOrAsteriskChar {
 
 sub PostAsteriskCommentChars {
     bless sub {
-        my $chars = shift;
+        my $chars = shift or return;
 
         my $not = MultiLineNotForwardSlashOrAsteriskChar->($chars);
         if ($not) {
@@ -81,7 +81,7 @@ sub PostAsteriskCommentChars {
 
 sub MultiLineNotAsteriskChar {
     bless sub {
-        my $chars = shift;
+        my $chars = shift or return;
         return if $chars && $chars =~ m{^\*}o;
         SourceCharacter->($chars);
     }, 'MultiLineNotAsteriskChar';
@@ -89,7 +89,7 @@ sub MultiLineNotAsteriskChar {
 
 sub MultiLineCommentChars {
     bless sub {
-        my $chars = shift;
+        my $chars = shift or return;
 
         my $not = MultiLineNotAsteriskChar->($chars);
         if ($not) {
